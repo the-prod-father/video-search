@@ -85,7 +85,8 @@ export async function listIndexes(): Promise<{ data: TLIndex[] }> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to list indexes: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to list indexes: ${response.statusText} - ${errorText}`);
   }
 
   return response.json();
@@ -98,7 +99,8 @@ export async function getIndex(indexId: string): Promise<TLIndex> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to get index: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to get index: ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -115,7 +117,8 @@ export async function listVideos(indexId: string): Promise<{ data: TLVideo[] }> 
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to list videos: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to list videos: ${response.statusText} - ${errorText}`);
   }
 
   const result = await response.json();
@@ -141,22 +144,33 @@ export async function searchVideos(
     sort_option?: string;
   }
 ): Promise<TLSearchResult> {
-  const body = {
-    index_id: indexId,
-    query,
-    search_options: options?.search_options || ['visual', 'conversation', 'text_in_video'],
-    page_limit: options?.page_limit || 10,
-    sort_option: options?.sort_option || 'score',
-  };
+  // TwelveLabs v1.3 search requires multipart/form-data
+  const formData = new FormData();
+  formData.append('index_id', indexId);
+  formData.append('query_text', query);  // Use query_text not query
+  formData.append('page_limit', String(options?.page_limit || 10));
+  formData.append('sort_option', options?.sort_option || 'score');
+
+  // Add search options as individual form fields
+  // Note: This index supports 'visual' and 'audio' (not 'conversation')
+  const searchOptions = options?.search_options || ['visual', 'audio'];
+  searchOptions.forEach(option => {
+    formData.append('search_options', option);
+  });
 
   const response = await fetch(`${API_BASE}/search`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify(body),
+    headers: {
+      'x-api-key': API_KEY!,
+      // Don't set Content-Type - let fetch set it with boundary for multipart
+    },
+    body: formData,
   });
 
   if (!response.ok) {
-    throw new Error(`Search failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('TwelveLabs API Error:', errorText);
+    throw new Error(`Search failed: ${response.statusText} - ${errorText}`);
   }
 
   return response.json();
@@ -247,7 +261,9 @@ export async function createIndex(
   });
 
   if (!response.ok) {
-    throw new Error(`Create index failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('TwelveLabs API Error:', errorText);
+    throw new Error(`Create index failed: ${response.statusText} - ${errorText}`);
   }
 
   return response.json();
@@ -261,7 +277,8 @@ export async function deleteIndex(indexId: string): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`Delete index failed: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Delete index failed: ${response.statusText} - ${errorText}`);
   }
 }
 
@@ -273,6 +290,7 @@ export async function deleteVideo(indexId: string, videoId: string): Promise<voi
   });
 
   if (!response.ok) {
-    throw new Error(`Delete video failed: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Delete video failed: ${response.statusText} - ${errorText}`);
   }
 }

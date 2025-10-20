@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const startTime = Date.now();
+
     let result;
 
     switch (analysisType) {
