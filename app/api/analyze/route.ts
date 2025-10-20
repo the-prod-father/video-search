@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateVideoAnalysis, client } from '@/lib/twelvelabs';
+import { generateSummary, generateText, generateGist } from '@/lib/twelvelabs-custom';
 
 // POST /api/analyze - Generate video analysis
 export async function POST(request: NextRequest) {
@@ -15,70 +15,55 @@ export async function POST(request: NextRequest) {
     }
 
     const startTime = Date.now();
-
     let result;
 
-    switch (analysisType) {
-      case 'summary':
-        result = await client.generate.summarize({
-          videoId,
-          type: 'summary',
-        });
-        break;
+    try {
+      switch (analysisType) {
+        case 'summary':
+          result = await generateSummary(videoId, 'summary');
+          break;
 
-      case 'chapters':
-        result = await client.generate.summarize({
-          videoId,
-          type: 'chapter',
-        });
-        break;
+        case 'chapters':
+          result = await generateSummary(videoId, 'chapter');
+          break;
 
-      case 'highlights':
-        result = await client.generate.summarize({
-          videoId,
-          type: 'highlight',
-        });
-        break;
+        case 'highlights':
+          result = await generateSummary(videoId, 'highlight');
+          break;
 
-      case 'topics':
-        result = await client.generate.text({
-          videoId,
-          prompt: 'List the main topics, themes, and subjects discussed or shown in this video. Format as a comma-separated list.',
-        });
-        break;
+        case 'topics':
+          result = await generateGist(videoId, ['topic']);
+          break;
 
-      case 'hashtags':
-        result = await client.generate.text({
-          videoId,
-          prompt: 'Generate relevant hashtags for this video content. Include hashtags for the main subjects, actions, locations, and themes shown.',
-        });
-        break;
+        case 'hashtags':
+          result = await generateGist(videoId, ['hashtag']);
+          break;
 
-      case 'title':
-        result = await client.generate.text({
-          videoId,
-          prompt: 'Generate a concise, descriptive title for this video (maximum 10 words).',
-        });
-        break;
+        case 'title':
+          result = await generateGist(videoId, ['title']);
+          break;
 
-      case 'comprehensive':
-        result = await generateVideoAnalysis(videoId);
-        break;
+        default:
+          return NextResponse.json(
+            { error: 'Invalid analysis type. Use: summary, chapters, highlights, topics, hashtags, or title' },
+            { status: 400 }
+          );
+      }
 
-      default:
-        return NextResponse.json(
-          { error: 'Invalid analysis type' },
-          { status: 400 }
-        );
+      const processingTime = Date.now() - startTime;
+
+      return NextResponse.json({
+        result,
+        processingTime,
+        analysisType,
+      });
+    } catch (apiError: any) {
+      console.error(`Analysis API error for ${analysisType}:`, apiError);
+      return NextResponse.json(
+        { error: apiError.message || `Failed to generate ${analysisType}` },
+        { status: 500 }
+      );
     }
-
-    const processingTime = Date.now() - startTime;
-
-    return NextResponse.json({
-      result,
-      processingTime,
-      analysisType,
-    });
   } catch (error: any) {
     console.error('Error analyzing video:', error);
     return NextResponse.json(

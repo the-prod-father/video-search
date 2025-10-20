@@ -167,14 +167,20 @@ export async function generateSummary(
   videoId: string,
   type: 'summary' | 'chapter' | 'highlight'
 ): Promise<any> {
-  const response = await fetch(`${API_BASE}/generate/${type}`, {
+  const endpoint = type === 'summary' ? 'summarize' : type;
+
+  const response = await fetch(`${API_BASE}/generate/${endpoint}`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ video_id: videoId }),
+    body: JSON.stringify({
+      video_id: videoId,
+      type: type,
+    }),
   });
 
   if (!response.ok) {
-    throw new Error(`Generate ${type} failed: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Generate ${type} failed: ${response.statusText} - ${errorText}`);
   }
 
   return response.json();
@@ -195,7 +201,30 @@ export async function generateText(
   });
 
   if (!response.ok) {
-    throw new Error(`Generate text failed: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Generate text failed: ${response.statusText} - ${errorText}`);
+  }
+
+  return response.json();
+}
+
+// Open-ended text generation (gist)
+export async function generateGist(
+  videoId: string,
+  types: string[]
+): Promise<any> {
+  const response = await fetch(`${API_BASE}/generate/gist`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      video_id: videoId,
+      types,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Generate gist failed: ${response.statusText} - ${errorText}`);
   }
 
   return response.json();

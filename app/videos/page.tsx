@@ -177,10 +177,20 @@ export default function VideosPage() {
 
                 {/* Actions */}
                 <div className="flex space-x-2 pt-2">
-                  <Button size="sm" className="flex-1" variant="outline">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => window.location.href = `/analyze/${video.id}?indexId=${video.indexId}`}
+                  >
                     Analyze
                   </Button>
-                  <Button size="sm" className="flex-1" variant="outline">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => window.location.href = `/search?indexId=${video.indexId}`}
+                  >
                     Search
                   </Button>
                 </div>
