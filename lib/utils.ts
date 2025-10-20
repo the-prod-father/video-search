@@ -37,6 +37,28 @@ export function formatRelativeTime(date: string | Date): string {
   const then = new Date(date);
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
+  // Handle future dates
+  if (seconds < 0) {
+    const futureSeconds = Math.abs(seconds);
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      week: 604800,
+      day: 86400,
+      hour: 3600,
+      minute: 60,
+    };
+
+    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+      const interval = Math.floor(futureSeconds / secondsInUnit);
+      if (interval >= 1) {
+        return `in ${interval} ${unit}${interval > 1 ? 's' : ''}`;
+      }
+    }
+
+    return 'in a moment';
+  }
+
   const intervals = {
     year: 31536000,
     month: 2592000,

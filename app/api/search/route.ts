@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchVideos } from '@/lib/twelvelabs';
+import { searchVideos as searchAPI } from '@/lib/twelvelabs-custom';
 
 // POST /api/search - Search across videos
 export async function POST(request: NextRequest) {
@@ -16,13 +16,13 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
-    const results = await searchVideos(indexId, query, options);
+    const results = await searchAPI(indexId, query, options);
 
     const processingTime = Date.now() - startTime;
 
     return NextResponse.json({
       results: results.data,
-      pageInfo: results.pageInfo,
+      pageInfo: results.page_info,
       processingTime,
       query,
     });

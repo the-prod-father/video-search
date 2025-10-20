@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client, getVideosWithMetadata, categorizeVideo } from '@/lib/twelvelabs';
+import { listIndexes, listVideos, deleteVideo as deleteVideoAPI } from '@/lib/twelvelabs-custom';
+
+function categorizeVideo(metadata?: any) {
+  if (!metadata) return 'unknown';
+  const type = metadata.type?.toLowerCase();
+  if (type === 'bwc' || type === 'body-worn-camera') return 'bwc';
+  if (type === 'cctv' || type === 'surveillance') return 'cctv';
+  if (type === 'iphone' || type === 'dji' || type === 'consumer') return 'high-quality';
+  if (type === 'youtube' || type === 'social-media') return 'youtube';
+  return 'unknown';
+}
 
 // GET /api/videos?indexId=INDEX_ID - Get all videos (optionally filtered by index)
 export async function GET(request: NextRequest) {
@@ -9,16 +19,46 @@ export async function GET(request: NextRequest) {
 
     if (indexId) {
       // Get videos from specific index
-      const videos = await getVideosWithMetadata(indexId);
+      const result = await listVideos(indexId);
+      const videos = result.data.map((video) => ({
+        id: video._id,
+        indexId: video.index_id,
+        metadata: video.metadata,
+        createdAt: video.created_at,
+        updatedAt: video.updated_at,
+        duration: video.metadata?.duration || 0,
+        size: video.metadata?.size || 0,
+        fps: video.metadata?.fps || 0,
+        width: video.metadata?.width || 0,
+        height: video.metadata?.height || 0,
+        hls: video.hls,
+        category: categorizeVideo(video.metadata),
+        thumbnailUrl: video.hls?.thumbnail_urls?.[0] || null,
+      }));
       return NextResponse.json({ videos });
     }
 
     // Get videos from all indexes
-    const indexes = await client.index.list();
+    const indexes = await listIndexes();
     const allVideos = [];
 
     for (const index of indexes.data) {
-      const videos = await getVideosWithMetadata(index.id);
+      const result = await listVideos(index._id);
+      const videos = result.data.map((video) => ({
+        id: video._id,
+        indexId: video.index_id,
+        metadata: video.metadata,
+        createdAt: video.created_at,
+        updatedAt: video.updated_at,
+        duration: video.metadata?.duration || 0,
+        size: video.metadata?.size || 0,
+        fps: video.metadata?.fps || 0,
+        width: video.metadata?.width || 0,
+        height: video.metadata?.height || 0,
+        hls: video.hls,
+        category: categorizeVideo(video.metadata),
+        thumbnailUrl: video.hls?.thumbnail_urls?.[0] || null,
+      }));
       allVideos.push(...videos);
     }
 
@@ -45,18 +85,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create video indexing task
-    const task = await client.task.create({
-      indexId,
-      url: videoUrl,
-      language: 'en',
-      ...(metadata && { metadata }),
-    });
-
+    // Note: Video upload would require the task API which we haven't implemented yet
+    // For now, return a message
     return NextResponse.json({
-      taskId: task.id,
-      status: task.status,
-      message: 'Video upload initiated. Processing in background.',
+      message: 'Video upload not yet implemented in custom client. Use TwelveLabs playground to upload videos.',
     });
   } catch (error: any) {
     console.error('Error uploading video:', error);
@@ -67,11 +99,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE /api/videos?videoId=VIDEO_ID - Delete a video
+// DELETE /api/videos?videoId=VIDEO_ID&indexId=INDEX_ID - Delete a video
 export async function DELETE(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const videoId = searchParams.get('videoId');
+    const indexId = searchParams.get('indexId');
 
     if (!videoId) {
       return NextResponse.json(
@@ -80,7 +113,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await client.index.video.delete(videoId);
+    if (!indexId) {
+      return NextResponse.json(
+        { error: 'Index ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await deleteVideoAPI(indexId, videoId);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

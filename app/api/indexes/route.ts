@@ -1,27 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client, createLawEnforcementIndex } from '@/lib/twelvelabs';
+import { listIndexes, createIndex, deleteIndex as deleteIndexAPI } from '@/lib/twelvelabs-custom';
 
 // GET /api/indexes - List all indexes
 export async function GET() {
   try {
-    const indexes = await client.index.list();
+    const result = await listIndexes();
 
-    // Enhance with video counts and metadata
-    const enhancedIndexes = await Promise.all(
-      indexes.data.map(async (index) => {
-        const videos = await client.index.video.list(index.id);
-        const totalDuration = videos.data.reduce((sum, video) => sum + (video.metadata?.duration || 0), 0);
-
-        return {
-          id: index.id,
-          name: index.name,
-          engines: index.engines,
-          videoCount: videos.data.length,
-          totalDuration,
-          createdAt: index.createdAt,
-        };
-      })
-    );
+    // Map to our expected format
+    const enhancedIndexes = result.data.map((index) => ({
+      id: index._id,
+      name: index.index_name,
+      engines: index.models.map((model) => ({
+        name: model.model_name,
+        options: model.model_options,
+      })),
+      videoCount: index.video_count,
+      totalDuration: index.total_duration,
+      createdAt: index.created_at,
+    }));
 
     return NextResponse.json({ indexes: enhancedIndexes });
   } catch (error: any) {
@@ -46,14 +42,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const index = await createLawEnforcementIndex(name, purpose || 'search');
+    const models = purpose === 'search'
+      ? [{ model_name: 'marengo2.7', model_options: ['visual', 'conversation', 'text_in_video'] }]
+      : [{ model_name: 'pegasus1.2', model_options: ['visual', 'conversation'] }];
+
+    const index = await createIndex(name, models);
 
     return NextResponse.json({
       index: {
-        id: index.id,
-        name: index.name,
-        engines: index.engines,
-        createdAt: index.createdAt,
+        id: index._id,
+        name: index.index_name,
+        engines: index.models.map((m) => ({ name: m.model_name, options: m.model_options })),
+        createdAt: index.created_at,
       },
     });
   } catch (error: any) {
@@ -78,7 +78,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await client.index.delete(indexId);
+    await deleteIndexAPI(indexId);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

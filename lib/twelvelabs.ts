@@ -7,6 +7,7 @@ if (!process.env.TWELVELABS_API_KEY) {
 // Initialize TwelveLabs client
 export const client = new TwelveLabs({
   apiKey: process.env.TWELVELABS_API_KEY,
+  serverUrl: 'https://api.twelvelabs.io/v1.3',
 });
 
 // Helper function to wait for video processing to complete
