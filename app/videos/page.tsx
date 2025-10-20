@@ -183,7 +183,8 @@ export default function VideosPage() {
                     size="sm"
                     className="flex-1"
                     variant="outline"
-                    onClick={() => router.push(`/analyze/${video.id}?indexId=${video.indexId}`)}
+                    onClick={() => router.push(`/analyze/${video.id}${video.indexId ? `?indexId=${video.indexId}` : ''}`)}
+                    disabled={!video.indexId}
                   >
                     Analyze
                   </Button>
@@ -191,7 +192,8 @@ export default function VideosPage() {
                     size="sm"
                     className="flex-1"
                     variant="outline"
-                    onClick={() => router.push(`/search?indexId=${video.indexId}`)}
+                    onClick={() => router.push(`/search${video.indexId ? `?indexId=${video.indexId}` : ''}`)}
+                    disabled={!video.indexId}
                   >
                     Search
                   </Button>

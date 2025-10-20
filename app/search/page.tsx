@@ -209,7 +209,7 @@ export default function SearchPage() {
             {results.map((result, index) => {
               const confidence = getConfidenceLevel(result.score);
               return (
-                <Card key={result.id || index}>
+                <Card key={`${result.videoId}-${result.start}-${result.end}-${index}`}>
                   <CardContent className="py-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 space-y-2">

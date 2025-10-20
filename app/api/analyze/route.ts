@@ -17,53 +17,45 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     let result;
 
-    try {
-      switch (analysisType) {
-        case 'summary':
-          result = await generateSummary(videoId, 'summary');
-          break;
+    switch (analysisType) {
+      case 'summary':
+        result = await generateSummary(videoId, 'summary');
+        break;
 
-        case 'chapters':
-          result = await generateSummary(videoId, 'chapter');
-          break;
+      case 'chapters':
+        result = await generateSummary(videoId, 'chapter');
+        break;
 
-        case 'highlights':
-          result = await generateSummary(videoId, 'highlight');
-          break;
+      case 'highlights':
+        result = await generateSummary(videoId, 'highlight');
+        break;
 
-        case 'topics':
-          result = await generateGist(videoId, ['topic']);
-          break;
+      case 'topics':
+        result = await generateGist(videoId, ['topic']);
+        break;
 
-        case 'hashtags':
-          result = await generateGist(videoId, ['hashtag']);
-          break;
+      case 'hashtags':
+        result = await generateGist(videoId, ['hashtag']);
+        break;
 
-        case 'title':
-          result = await generateGist(videoId, ['title']);
-          break;
+      case 'title':
+        result = await generateGist(videoId, ['title']);
+        break;
 
-        default:
-          return NextResponse.json(
-            { error: 'Invalid analysis type. Use: summary, chapters, highlights, topics, hashtags, or title' },
-            { status: 400 }
-          );
-      }
-
-      const processingTime = Date.now() - startTime;
-
-      return NextResponse.json({
-        result,
-        processingTime,
-        analysisType,
-      });
-    } catch (apiError: any) {
-      console.error(`Analysis API error for ${analysisType}:`, apiError);
-      return NextResponse.json(
-        { error: apiError.message || `Failed to generate ${analysisType}` },
-        { status: 500 }
-      );
+      default:
+        return NextResponse.json(
+          { error: 'Invalid analysis type. Use: summary, chapters, highlights, topics, hashtags, or title' },
+          { status: 400 }
+        );
     }
+
+    const processingTime = Date.now() - startTime;
+
+    return NextResponse.json({
+      result,
+      processingTime,
+      analysisType,
+    });
   } catch (error: any) {
     console.error('Error analyzing video:', error);
     return NextResponse.json(
