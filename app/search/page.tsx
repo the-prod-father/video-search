@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Clock, Video, AlertCircle } from 'lucide-react';
-import { formatDuration, getConfidenceLevel } from '@/lib/utils';
+import { Search, Clock, Video, AlertCircle, Play } from 'lucide-react';
 
 interface Index {
   id: string;
@@ -13,13 +12,13 @@ interface Index {
 }
 
 interface SearchResult {
-  id: string;
   score: number;
   start: number;
   end: number;
-  videoId: string;
+  video_id: string;
   confidence: string;
-  metadata: Array<{ type: string; text?: string }>;
+  thumbnail_url?: string;
+  transcription?: string;
 }
 
 export default function SearchPage() {
@@ -63,10 +62,6 @@ export default function SearchPage() {
         body: JSON.stringify({
           indexId: selectedIndex,
           query: query.trim(),
-          options: {
-            searchOptions: ['visual', 'conversation', 'text_in_video'],
-            pageLimit: 20,
-          },
         }),
       });
 
@@ -76,179 +71,241 @@ export default function SearchPage() {
         setResults(data.results || []);
         setProcessingTime(data.processingTime);
       } else {
-        setError(data.error || 'Search failed');
+        setError(data.error || 'Search failed. Please try again.');
       }
     } catch (error) {
-      setError('Network error. Please try again.');
+      setError('Could not connect. Please check your internet connection.');
       console.error('Error searching:', error);
     } finally {
       setSearching(false);
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 70) return 'text-yellow-600';
+    return 'text-orange-600';
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return 'Great Match';
+    if (score >= 70) return 'Good Match';
+    return 'Possible Match';
+  };
+
   const exampleQueries = [
-    'officer running',
-    'person wearing red jacket',
-    'vehicle fleeing scene',
-    'officer with hand on weapon',
-    'verbal commands given',
-    'suspect detained',
+    'person demonstrating device',
+    'officer speaking',
+    'live stream',
+    'recording button',
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Semantic Video Search</h1>
-        <p className="text-muted-foreground">
-          Search across your video content using natural language
+    <div className="max-w-6xl mx-auto space-y-6 p-6">
+      {/* Simple Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-bold">🔍 Search Your Videos</h1>
+        <p className="text-xl text-muted-foreground">
+          Type what you're looking for in plain English
         </p>
       </div>
 
-      {/* Search Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search Query</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="space-y-4">
-            {/* Index Selection */}
+      {/* Big Search Box */}
+      <Card className="border-2">
+        <CardContent className="p-6">
+          <form onSubmit={handleSearch} className="space-y-6">
+            {/* Search Input - BIG and CLEAR */}
             <div>
-              <label className="text-sm font-medium mb-2 block">
-                Select Index
+              <label className="text-lg font-semibold mb-3 block">
+                What are you looking for?
               </label>
-              <select
-                value={selectedIndex}
-                onChange={(e) => setSelectedIndex(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md bg-background"
-                disabled={indexes.length === 0}
-              >
-                {indexes.length === 0 ? (
-                  <option>No indexes available</option>
-                ) : (
-                  indexes.map((index) => (
-                    <option key={index.id} value={index.id}>
-                      {index.name}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            {/* Query Input */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Search Query
-              </label>
-              <div className="flex space-x-2">
+              <div className="flex space-x-3">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="e.g., officer running towards suspect"
-                  className="flex-1 px-3 py-2 border rounded-md bg-background"
+                  placeholder="Type here... (e.g., 'person demonstrating device')"
+                  className="flex-1 px-6 py-4 text-lg border-2 rounded-lg bg-background focus:ring-2 focus:ring-blue-500"
                   disabled={searching || indexes.length === 0}
+                  autoFocus
                 />
                 <Button
                   type="submit"
                   disabled={searching || !query.trim() || indexes.length === 0}
+                  size="lg"
+                  className="px-8 text-lg"
                 >
-                  <Search className="mr-2 h-4 w-4" />
+                  <Search className="mr-2 h-5 w-5" />
                   {searching ? 'Searching...' : 'Search'}
                 </Button>
               </div>
             </div>
 
-            {/* Example Queries */}
+            {/* Example Buttons - Big and Clear */}
             <div>
-              <p className="text-sm text-muted-foreground mb-2">
-                Try these law enforcement search queries:
+              <p className="text-sm text-muted-foreground mb-3">
+                💡 Click an example to try:
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {exampleQueries.map((example) => (
                   <Button
                     key={example}
                     type="button"
                     variant="outline"
-                    size="sm"
+                    size="lg"
                     onClick={() => setQuery(example)}
                     disabled={searching}
+                    className="text-base"
                   >
                     {example}
                   </Button>
                 ))}
               </div>
             </div>
+
+            {/* Index Selection - Hidden if only one */}
+            {indexes.length > 1 && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Search in:
+                </label>
+                <select
+                  value={selectedIndex}
+                  onChange={(e) => setSelectedIndex(e.target.value)}
+                  className="w-full px-4 py-3 text-base border-2 rounded-lg bg-background"
+                >
+                  {indexes.map((index) => (
+                    <option key={index.id} value={index.id}>
+                      {index.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>
 
-      {/* Error Message */}
+      {/* Error Message - Big and Clear */}
       {error && (
-        <Card className="border-destructive">
-          <CardContent className="flex items-center space-x-2 py-4">
-            <AlertCircle className="h-4 w-4 text-destructive" />
-            <p className="text-sm text-destructive">{error}</p>
+        <Card className="border-2 border-red-500 bg-red-50">
+          <CardContent className="flex items-center space-x-3 py-6">
+            <AlertCircle className="h-6 w-6 text-red-600" />
+            <p className="text-lg text-red-900 font-medium">{error}</p>
           </CardContent>
         </Card>
       )}
 
-      {/* Results */}
-      {results.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">
-              Search Results ({results.length})
+      {/* Loading State */}
+      {searching && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-xl font-semibold">Searching your videos...</p>
+            <p className="text-muted-foreground">This usually takes less than a second</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Results - BIG VISUAL CARDS */}
+      {!searching && results.length > 0 && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg border-2 border-green-200">
+            <h2 className="text-2xl font-bold text-green-900">
+              ✅ Found {results.length} {results.length === 1 ? 'result' : 'results'}!
             </h2>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Processed in {processingTime}ms</span>
+            <div className="flex items-center space-x-2 text-green-700">
+              <Clock className="h-5 w-5" />
+              <span className="text-lg font-semibold">{(processingTime / 1000).toFixed(2)}s</span>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="grid gap-6">
             {results.map((result, index) => {
-              const confidence = getConfidenceLevel(result.score);
+              const videoId = result.video_id || '';
+              const score = Math.round(result.score);
+
               return (
-                <Card key={`${result.videoId}-${result.start}-${result.end}-${index}`}>
-                  <CardContent className="py-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Video className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-mono text-sm text-muted-foreground">
-                            {result.videoId.substring(0, 20)}...
-                          </span>
-                          <Badge variant="outline">
-                            {formatDuration(result.start)} - {formatDuration(result.end)}
-                          </Badge>
+                <Card key={`${videoId}-${index}`} className="overflow-hidden border-2 hover:shadow-lg transition-shadow">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {/* Thumbnail - BIG and VISUAL */}
+                    <div className="relative aspect-video md:aspect-auto bg-muted">
+                      {result.thumbnail_url ? (
+                        <img
+                          src={result.thumbnail_url}
+                          alt="Video moment"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <Video className="h-16 w-16 text-muted-foreground" />
                         </div>
-
-                        {result.metadata && result.metadata.length > 0 && (
-                          <div className="text-sm">
-                            {result.metadata.map((meta, i) => (
-                              meta.text && (
-                                <p key={i} className="text-muted-foreground">
-                                  <strong className="text-foreground">{meta.type}:</strong> {meta.text}
-                                </p>
-                              )
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col items-end space-y-2">
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Confidence</p>
-                          <p className={`text-lg font-bold ${confidence.color}`}>
-                            {(result.score * 100).toFixed(1)}%
-                          </p>
-                          <Badge variant={confidence.level === 'high' ? 'default' : 'outline'}>
-                            {confidence.level}
-                          </Badge>
-                        </div>
+                      )}
+                      <div className="absolute bottom-2 right-2 bg-black/80 px-3 py-1 rounded">
+                        <Play className="inline h-4 w-4 mr-1 text-white" />
+                        <span className="text-white font-semibold">
+                          {formatTime(result.start)} - {formatTime(result.end)}
+                        </span>
                       </div>
                     </div>
-                  </CardContent>
+
+                    {/* Content */}
+                    <div className="md:col-span-2 p-6 space-y-4">
+                      {/* Match Score - BIG and CLEAR */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Match Quality</p>
+                          <p className={`text-3xl font-bold ${getScoreColor(score)}`}>
+                            {score}%
+                          </p>
+                        </div>
+                        <Badge
+                          variant={score >= 80 ? 'default' : 'secondary'}
+                          className="text-lg px-4 py-2"
+                        >
+                          {getScoreLabel(score)}
+                        </Badge>
+                      </div>
+
+                      {/* Transcription - What was said */}
+                      {result.transcription && (
+                        <div className="bg-muted p-4 rounded-lg">
+                          <p className="text-sm font-semibold text-muted-foreground mb-1">
+                            💬 What was said:
+                          </p>
+                          <p className="text-base leading-relaxed">
+                            "{result.transcription.substring(0, 200)}
+                            {result.transcription.length > 200 ? '...' : ''}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Clip Duration */}
+                      <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+                        <div>
+                          <span className="font-semibold">Starts at:</span> {formatTime(result.start)}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Ends at:</span> {formatTime(result.end)}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Duration:</span> {Math.round(result.end - result.start)}s
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <Button size="lg" className="w-full md:w-auto">
+                        <Play className="mr-2 h-5 w-5" />
+                        Watch This Clip
+                      </Button>
+                    </div>
+                  </div>
                 </Card>
               );
             })}
@@ -258,13 +315,20 @@ export default function SearchPage() {
 
       {/* No Results */}
       {!searching && results.length === 0 && query && !error && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Search className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No results found</h3>
-            <p className="text-muted-foreground text-center">
-              Try a different search query or check that your videos are indexed
+        <Card className="border-2">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <Search className="h-24 w-24 text-muted-foreground mb-6" />
+            <h3 className="text-2xl font-bold mb-3">No matches found</h3>
+            <p className="text-xl text-muted-foreground mb-6 max-w-md">
+              Try using different words or one of the example searches above
             </p>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setQuery(exampleQueries[0])}
+            >
+              Try an example search
+            </Button>
           </CardContent>
         </Card>
       )}
