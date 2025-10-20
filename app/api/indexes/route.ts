@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     }
 
     const models = purpose === 'search'
-      ? [{ model_name: 'marengo2.7', model_options: ['visual', 'conversation', 'text_in_video'] }]
-      : [{ model_name: 'pegasus1.2', model_options: ['visual', 'conversation'] }];
+      ? [{ model_name: 'marengo2.6', model_options: ['visual', 'conversation', 'text_in_video'] }]
+      : [{ model_name: 'pegasus1.1', model_options: ['visual', 'conversation'] }];
 
     const index = await createIndex(name, models);
 

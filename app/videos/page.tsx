@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { formatDuration, formatFileSize, getCategoryColor, getCategoryLabel, get
 import type { EnhancedVideo } from '@/lib/types';
 
 export default function VideosPage() {
+  const router = useRouter();
   const [videos, setVideos] = useState<EnhancedVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -181,7 +183,7 @@ export default function VideosPage() {
                     size="sm"
                     className="flex-1"
                     variant="outline"
-                    onClick={() => window.location.href = `/analyze/${video.id}?indexId=${video.indexId}`}
+                    onClick={() => router.push(`/analyze/${video.id}?indexId=${video.indexId}`)}
                   >
                     Analyze
                   </Button>
@@ -189,7 +191,7 @@ export default function VideosPage() {
                     size="sm"
                     className="flex-1"
                     variant="outline"
-                    onClick={() => window.location.href = `/search?indexId=${video.indexId}`}
+                    onClick={() => router.push(`/search?indexId=${video.indexId}`)}
                   >
                     Search
                   </Button>

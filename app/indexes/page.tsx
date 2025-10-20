@@ -147,7 +147,9 @@ export default function IndexesPage() {
                     <div className="flex items-center space-x-2">
                       <CardTitle>{index.name}</CardTitle>
                       <Badge variant="outline">
-                        {index.engines[0]?.name === 'marengo2.6' ? 'Search' : 'Analysis'}
+                        {index.engines[0]?.name?.startsWith('marengo') ? 'Search' : 
+                         index.engines[0]?.name?.startsWith('pegasus') ? 'Analysis' : 
+                         'Unknown'}
                       </Badge>
                     </div>
                     <CardDescription>
@@ -193,7 +195,9 @@ export default function IndexesPage() {
 
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Index ID</div>
-                    <p className="text-xs font-mono">{index.id.substring(0, 20)}...</p>
+                    <p className="text-xs font-mono">
+                      {index.id.length > 20 ? `${index.id.substring(0, 20)}...` : index.id}
+                    </p>
                   </div>
                 </div>
               </CardContent>

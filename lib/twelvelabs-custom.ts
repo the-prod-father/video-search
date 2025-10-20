@@ -167,9 +167,7 @@ export async function generateSummary(
   videoId: string,
   type: 'summary' | 'chapter' | 'highlight'
 ): Promise<any> {
-  const endpoint = type === 'summary' ? 'summarize' : type;
-
-  const response = await fetch(`${API_BASE}/generate/${endpoint}`, {
+  const response = await fetch(`${API_BASE}/summarize`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -186,12 +184,12 @@ export async function generateSummary(
   return response.json();
 }
 
-// Generate text (for topics, hashtags, titles)
+// Generate text (for topics, hashtags, titles) using gist endpoint
 export async function generateText(
   videoId: string,
   prompt: string
 ): Promise<any> {
-  const response = await fetch(`${API_BASE}/generate/text`, {
+  const response = await fetch(`${API_BASE}/gist`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -208,12 +206,12 @@ export async function generateText(
   return response.json();
 }
 
-// Open-ended text generation (gist)
+// Open-ended text generation (gist) - for topics, hashtags, titles
 export async function generateGist(
   videoId: string,
   types: string[]
 ): Promise<any> {
-  const response = await fetch(`${API_BASE}/generate/gist`, {
+  const response = await fetch(`${API_BASE}/gist`, {
     method: 'POST',
     headers,
     body: JSON.stringify({

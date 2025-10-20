@@ -37,17 +37,19 @@ export function formatRelativeTime(date: string | Date): string {
   const then = new Date(date);
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
+  // Define intervals once to avoid duplication
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60,
+  };
+
   // Handle future dates
   if (seconds < 0) {
     const futureSeconds = Math.abs(seconds);
-    const intervals = {
-      year: 31536000,
-      month: 2592000,
-      week: 604800,
-      day: 86400,
-      hour: 3600,
-      minute: 60,
-    };
 
     for (const [unit, secondsInUnit] of Object.entries(intervals)) {
       const interval = Math.floor(futureSeconds / secondsInUnit);
@@ -58,15 +60,6 @@ export function formatRelativeTime(date: string | Date): string {
 
     return 'in a moment';
   }
-
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    week: 604800,
-    day: 86400,
-    hour: 3600,
-    minute: 60,
-  };
 
   for (const [unit, secondsInUnit] of Object.entries(intervals)) {
     const interval = Math.floor(seconds / secondsInUnit);
@@ -119,7 +112,7 @@ export function getConfidenceLevel(score: number): {
 // Truncate text to specified length
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
+  return text.slice(0, maxLength - 3) + '...';
 }
 
 // Parse resolution from video dimensions
