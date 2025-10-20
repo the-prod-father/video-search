@@ -1,274 +1,313 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Video, Search, Database, BarChart3, Shield, Zap, Target } from "lucide-react";
+'use client';
 
-export default function Home() {
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Video,
+  Clock,
+  Search,
+  Database,
+  Play,
+  Sparkles,
+  FileVideo,
+  TrendingUp,
+  ChevronRight
+} from 'lucide-react';
+
+interface Index {
+  id: string;
+  name: string;
+  videoCount: number;
+  totalDuration: number;
+}
+
+interface VideoItem {
+  id: string;
+  metadata?: {
+    filename?: string;
+    duration?: number;
+  };
+  createdAt: string;
+  thumbnailUrl?: string;
+  indexId?: string;
+}
+
+export default function Dashboard() {
+  const router = useRouter();
+  const [indexes, setIndexes] = useState<Index[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const indexResponse = await fetch('/api/indexes');
+      const indexData = await indexResponse.json();
+      const indexesList = indexData.indexes || [];
+      setIndexes(indexesList);
+
+      if (indexesList.length > 0) {
+        const videoResponse = await fetch(`/api/videos?indexId=${indexesList[0].id}`);
+        const videoData = await videoResponse.json();
+        setVideos((videoData.videos || []).map((v: VideoItem) => ({
+          ...v,
+          indexId: indexesList[0].id
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(mins / 60);
+    if (hours > 0) return `${hours}h ${mins % 60}m`;
+    return `${mins}m`;
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const totalVideos = indexes.reduce((sum, idx) => sum + idx.videoCount, 0);
+  const totalDuration = indexes.reduce((sum, idx) => sum + idx.totalDuration, 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-lg text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">
-          TwelveLabs Video Understanding
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Comprehensive demonstration of video AI for government and law enforcement applications.
-          Testing across real-world video types: BWC, CCTV, high-quality consumer, and social media.
-        </p>
-        <div className="flex items-center justify-center space-x-4 pt-4">
-          <Link href="/search">
-            <Button size="lg">
-              <Search className="mr-2 h-4 w-4" />
-              Start Searching
-            </Button>
-          </Link>
-          <Link href="/videos">
-            <Button size="lg" variant="outline">
-              <Video className="mr-2 h-4 w-4" />
-              View Videos
-            </Button>
-          </Link>
+    <div className="max-w-7xl mx-auto space-y-6 p-6">
+      {/* Header with Quick Actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold">📊 Dashboard</h1>
+          <p className="text-lg text-muted-foreground">Your video library at a glance</p>
+        </div>
+        <div className="flex space-x-3">
+          <Button size="lg" onClick={() => router.push('/search')}>
+            <Search className="mr-2 h-5 w-5" />
+            Search Videos
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => router.push('/videos')}>
+            <Video className="mr-2 h-5 w-5" />
+            View All
+          </Button>
         </div>
       </div>
 
-      {/* Key Features */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Search className="h-5 w-5 text-primary" />
-              <CardTitle>Semantic Search</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Natural language search across all video content. Find specific moments, actions, or objects
-              without manual tagging or timestamps.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Zap className="h-5 w-5 text-primary" />
-              <CardTitle>Video Analysis</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Auto-generate summaries, chapters, highlights, and topics. Perfect for evidence review
-              and incident timeline creation.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Target className="h-5 w-5 text-primary" />
-              <CardTitle>Quality Comparison</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Test and compare performance across different video types to understand real-world
-              deployment constraints and accuracy.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Video Types */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Video Types Being Tested</CardTitle>
-          <CardDescription>
-            Four distinct categories representing real-world law enforcement video sources
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2 p-4 border rounded-lg">
-              <Badge className="bg-blue-500">Body Worn Camera</Badge>
-              <h4 className="font-semibold">Axon BWC</h4>
-              <p className="text-sm text-muted-foreground">
-                Real law enforcement footage. 720p-1080p, variable lighting, motion, and audio challenges.
-              </p>
-            </div>
-
-            <div className="space-y-2 p-4 border rounded-lg">
-              <Badge className="bg-purple-500">CCTV Surveillance</Badge>
-              <h4 className="font-semibold">Fixed Cameras</h4>
-              <p className="text-sm text-muted-foreground">
-                Business and municipal surveillance. 480p-1080p, compression artifacts, distance challenges.
-              </p>
-            </div>
-
-            <div className="space-y-2 p-4 border rounded-lg">
-              <Badge className="bg-green-500">High Quality</Badge>
-              <h4 className="font-semibold">iPhone / DJI</h4>
-              <p className="text-sm text-muted-foreground">
-                Consumer and professional grade. 1080p-4K, excellent lighting and stabilization. Baseline performance.
-              </p>
-            </div>
-
-            <div className="space-y-2 p-4 border rounded-lg">
-              <Badge className="bg-red-500">YouTube/Social</Badge>
-              <h4 className="font-semibold">Re-encoded Content</h4>
-              <p className="text-sm text-muted-foreground">
-                Public records and social media. Variable quality, multiple encoding passes, unknown source.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Law Enforcement Use Cases */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-primary" />
-            <CardTitle>Government & Law Enforcement Use Cases</CardTitle>
-          </div>
-          <CardDescription>
-            Real-world applications being demonstrated
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-              <div>
-                <h4 className="font-semibold">Use of Force Investigation</h4>
-                <p className="text-sm text-muted-foreground">
-                  Search across BWC footage to identify and review use of force incidents,
-                  generate incident timelines, and create evidence packages.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-              <div>
-                <h4 className="font-semibold">Vehicle & Person Tracking</h4>
-                <p className="text-sm text-muted-foreground">
-                  Find vehicles or individuals across multiple camera feeds and video sources
-                  using natural language descriptions.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-              <div>
-                <h4 className="font-semibold">Evidence Timeline Generation</h4>
-                <p className="text-sm text-muted-foreground">
-                  Auto-generate chronological breakdowns of incidents with chapters, summaries,
-                  and highlights for court proceedings.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-              <div>
-                <h4 className="font-semibold">Multi-Source Evidence Correlation</h4>
-                <p className="text-sm text-muted-foreground">
-                  Correlate BWC, CCTV, and citizen-submitted videos of the same incident
-                  to build comprehensive evidence packages.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Stats */}
+      {/* Key Metrics - BIG and CLEAR */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Indexes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-muted-foreground">View indexes page for details</p>
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-muted-foreground">Total Videos</p>
+              <FileVideo className="h-8 w-8 text-blue-600" />
+            </div>
+            <p className="text-4xl font-bold">{totalVideos}</p>
+            <p className="text-xs text-muted-foreground mt-1">Indexed and ready</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Videos Indexed</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-muted-foreground">Across all categories</p>
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-muted-foreground">Total Duration</p>
+              <Clock className="h-8 w-8 text-green-600" />
+            </div>
+            <p className="text-4xl font-bold">{formatDuration(totalDuration)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Of video content</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Duration</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-muted-foreground">Hours of video content</p>
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-muted-foreground">Indexes</p>
+              <Database className="h-8 w-8 text-purple-600" />
+            </div>
+            <p className="text-4xl font-bold">{indexes.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Active collections</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Searches Performed</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-muted-foreground">Testing ongoing</p>
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-muted-foreground">Avg Length</p>
+              <TrendingUp className="h-8 w-8 text-orange-600" />
+            </div>
+            <p className="text-4xl font-bold">
+              {totalVideos > 0 ? formatDuration(totalDuration / totalVideos) : '0m'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Per video</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Next Steps */}
-      <Card className="bg-primary/5">
-        <CardHeader>
-          <CardTitle>Getting Started</CardTitle>
-          <CardDescription>
-            Explore the application to understand TwelveLabs capabilities
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Database className="h-4 w-4" />
-              <span className="text-sm">
-                <Link href="/indexes" className="font-semibold hover:underline">View Indexes</Link>
-                {" "}- See your video indexes and create new ones
-              </span>
+      {/* Your Videos - BIG VISUAL CARDS */}
+      <Card className="border-2">
+        <div className="p-6 pb-0">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">📹 Your Videos</h2>
+              <p className="text-muted-foreground">Click to analyze or search</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <Video className="h-4 w-4" />
-              <span className="text-sm">
-                <Link href="/videos" className="font-semibold hover:underline">Browse Videos</Link>
-                {" "}- Explore videos categorized by type
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Search className="h-4 w-4" />
-              <span className="text-sm">
-                <Link href="/search" className="font-semibold hover:underline">Try Search</Link>
-                {" "}- Test semantic search with natural language
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="text-sm">
-                <Link href="/insights" className="font-semibold hover:underline">View Insights</Link>
-                {" "}- Government deployment considerations and use cases
-              </span>
-            </div>
+            {videos.length > 6 && (
+              <Button variant="ghost" onClick={() => router.push('/videos')}>
+                View All ({videos.length})
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            )}
           </div>
+        </div>
+
+        <CardContent className="p-6 pt-0">
+          {videos.length === 0 ? (
+            <div className="text-center py-16 bg-muted/30 rounded-lg">
+              <Video className="h-20 w-20 mx-auto text-muted-foreground mb-4" />
+              <p className="text-xl font-semibold mb-2">No videos yet</p>
+              <p className="text-muted-foreground mb-6">Upload videos to your index to get started</p>
+              <Button onClick={() => router.push('/indexes')}>
+                <Database className="mr-2 h-4 w-4" />
+                Go to Indexes
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {videos.slice(0, 6).map((video) => (
+                <Card
+                  key={video.id}
+                  className="overflow-hidden border-2 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group"
+                >
+                  {/* Large Thumbnail */}
+                  <div className="relative aspect-video bg-muted">
+                    {video.thumbnailUrl ? (
+                      <img
+                        src={video.thumbnailUrl}
+                        alt="Video"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <Video className="h-16 w-16 text-muted-foreground" />
+                      </div>
+                    )}
+                    {video.metadata?.duration && (
+                      <Badge className="absolute bottom-2 right-2 bg-black/80 text-white border-0">
+                        <Clock className="mr-1 h-3 w-3" />
+                        {formatTime(video.metadata.duration)}
+                      </Badge>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <p className="font-semibold text-sm line-clamp-1">
+                        {video.metadata?.filename || 'Untitled Video'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Added {formatDate(video.createdAt)}
+                      </p>
+                    </div>
+
+                    {/* Big Action Buttons */}
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push(`/analyze/${video.id}${video.indexId ? `?indexId=${video.indexId}` : ''}`)}
+                      >
+                        <Sparkles className="mr-1 h-4 w-4" />
+                        Analyze
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => router.push('/search')}
+                      >
+                        <Search className="mr-1 h-4 w-4" />
+                        Search
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Index Summary - If multiple */}
+      {indexes.length > 0 && (
+        <Card className="border-2 bg-gradient-to-br from-blue-50 to-purple-50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">🗂️ Your Collections</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/indexes')}
+              >
+                Manage
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {indexes.map((index) => (
+                <div
+                  key={index.id}
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border hover:shadow-sm transition-shadow"
+                >
+                  <div>
+                    <p className="font-semibold text-sm">{index.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {index.videoCount} videos • {formatDuration(index.totalDuration)} total
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push('/videos')}
+                  >
+                    View
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
