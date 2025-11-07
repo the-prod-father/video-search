@@ -14,7 +14,10 @@ import {
   Sparkles,
   FileVideo,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  Download,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 interface Index {
@@ -40,6 +43,10 @@ export default function Dashboard() {
   const [indexes, setIndexes] = useState<Index[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [evidenceVideos, setEvidenceVideos] = useState<any[]>([]);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const [evidenceSuccess, setEvidenceSuccess] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -87,6 +94,37 @@ export default function Dashboard() {
     });
   };
 
+  const syncFromEvidence = async () => {
+    setEvidenceLoading(true);
+    setEvidenceError(null);
+    setEvidenceSuccess(false);
+
+    try {
+      // Try real API first
+      let response = await fetch('/api/evidence/videos');
+      let data = await response.json();
+
+      // If real API fails, fallback to demo mode
+      if (!response.ok) {
+        console.log('Real API failed, using demo mode:', data.error);
+        response = await fetch('/api/evidence/videos?demo=true');
+        data = await response.json();
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch Evidence.com videos');
+      }
+
+      setEvidenceVideos(data.videos || []);
+      setEvidenceSuccess(true);
+    } catch (error: any) {
+      console.error('Error syncing Evidence.com:', error);
+      setEvidenceError(error.message);
+    } finally {
+      setEvidenceLoading(false);
+    }
+  };
+
   const totalVideos = indexes.reduce((sum, idx) => sum + idx.videoCount, 0);
   const totalDuration = indexes.reduce((sum, idx) => sum + idx.totalDuration, 0);
 
@@ -110,6 +148,25 @@ export default function Dashboard() {
           <p className="text-lg text-muted-foreground">Your video library at a glance</p>
         </div>
         <div className="flex space-x-3">
+          <Button
+            size="lg"
+            variant="default"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            onClick={syncFromEvidence}
+            disabled={evidenceLoading}
+          >
+            {evidenceLoading ? (
+              <>
+                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-5 w-5" />
+                Sync Evidence.com
+              </>
+            )}
+          </Button>
           <Button size="lg" onClick={() => router.push('/search')}>
             <Search className="mr-2 h-5 w-5" />
             Search Videos
@@ -120,6 +177,98 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Evidence.com Sync Status */}
+      {(evidenceSuccess || evidenceError) && (
+        <Card className={`border-2 ${evidenceSuccess ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {evidenceSuccess ? (
+                  <>
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <div>
+                      <p className="font-semibold text-green-900">Evidence.com Sync Successful!</p>
+                      <p className="text-sm text-green-700">
+                        Found {evidenceVideos.length} video{evidenceVideos.length !== 1 ? 's' : ''} in your Evidence.com account
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-6 w-6 text-red-600" />
+                    <div>
+                      <p className="font-semibold text-red-900">Error Syncing Evidence.com</p>
+                      <p className="text-sm text-red-700">{evidenceError}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEvidenceSuccess(false);
+                  setEvidenceError(null);
+                }}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Evidence.com Videos */}
+      {evidenceSuccess && evidenceVideos.length > 0 && (
+        <Card className="border-2 border-blue-500">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold">🚔 Evidence.com Videos</h2>
+                <p className="text-muted-foreground">
+                  {evidenceVideos.length} video{evidenceVideos.length !== 1 ? 's' : ''} from your Evidence.com account
+                </p>
+              </div>
+              <Badge variant="secondary" className="text-sm">
+                Body-Worn Camera
+              </Badge>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {evidenceVideos.map((video, index) => (
+                <div
+                  key={video.id || index}
+                  className="flex items-center justify-between p-4 bg-white rounded-lg border hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-24 h-16 bg-muted rounded flex items-center justify-center">
+                      {video.thumbnailUrl ? (
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover rounded"
+                        />
+                      ) : (
+                        <Video className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">{video.title || 'Untitled'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {video.duration && `${formatTime(video.duration)} • `}
+                        {video.uploadDate && formatDate(video.uploadDate)}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    BWC
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key Metrics - BIG and CLEAR */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
