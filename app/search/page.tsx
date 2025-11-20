@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Clock, Video, AlertCircle, Play } from 'lucide-react';
+import { Search, Clock, Video, AlertCircle, Play, Loader2 } from 'lucide-react';
 
 interface Index {
   id: string;
@@ -21,7 +22,8 @@ interface SearchResult {
   transcription?: string;
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
+  const searchParams = useSearchParams();
   const [indexes, setIndexes] = useState<Index[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<string>('');
   const [query, setQuery] = useState('');
@@ -32,13 +34,12 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchIndexes();
-    // Check if indexId is provided in URL params
-    const params = new URLSearchParams(window.location.search);
-    const indexIdParam = params.get('indexId');
+    // Check if indexId is provided in URL params using Next.js useSearchParams
+    const indexIdParam = searchParams.get('indexId');
     if (indexIdParam) {
       setSelectedIndex(indexIdParam);
     }
-  }, []);
+  }, [searchParams]);
 
   const fetchIndexes = async () => {
     try {
@@ -346,5 +347,20 @@ export default function SearchPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FAF8F2] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-[#2563EB] mx-auto" />
+          <p className="text-[#64748B]">Loading search...</p>
+        </div>
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }
