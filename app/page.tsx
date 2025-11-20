@@ -38,6 +38,11 @@ interface VideoItem {
   metadata?: {
     filename?: string;
     duration?: number;
+    recordedOn?: string;
+    location?: string;
+    officer?: string;
+    scenario?: string;
+    [key: string]: any; // Allow additional metadata properties
   };
   createdAt: string;
   thumbnailUrl?: string;

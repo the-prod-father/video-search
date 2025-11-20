@@ -93,9 +93,9 @@ async function getEvidenceToken() {
 // GET /api/evidence/[evidenceId] - Fetch a specific evidence item by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { evidenceId: string } }
+  { params }: { params: Promise<{ evidenceId: string }> }
 ) {
-  const evidenceId = params.evidenceId;
+  const { evidenceId } = await params;
 
   if (!evidenceId) {
     return NextResponse.json(
@@ -184,7 +184,10 @@ export async function GET(
           if (!result) continue; // Skip if OAuth failed
           headers = result;
         } else {
-          headers = authMethod.headers;
+          // Filter out undefined values to satisfy TypeScript
+          headers = Object.fromEntries(
+            Object.entries(authMethod.headers).filter(([_, v]) => v !== undefined)
+          ) as Record<string, string>;
         }
         
         console.log(`[Evidence.com] Fetching evidence files from: ${fullUrl} (${authMethod.name})`);
