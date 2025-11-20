@@ -32,6 +32,12 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchIndexes();
+    // Check if indexId is provided in URL params
+    const params = new URLSearchParams(window.location.search);
+    const indexIdParam = params.get('indexId');
+    if (indexIdParam) {
+      setSelectedIndex(indexIdParam);
+    }
   }, []);
 
   const fetchIndexes = async () => {
@@ -114,6 +120,13 @@ export default function SearchPage() {
         <p className="text-xl text-muted-foreground">
           Type what you're looking for in plain English
         </p>
+        {selectedIndex && indexes.find(i => i.id === selectedIndex) && (
+          <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F0F9FF] border border-[#BAE6FD]">
+            <span className="text-sm font-medium text-[#0369A1]">
+              🔍 Searching case: <span className="font-semibold">{indexes.find(i => i.id === selectedIndex)?.name}</span>
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Big Search Box */}

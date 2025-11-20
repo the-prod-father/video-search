@@ -9,53 +9,115 @@ async function getEvidenceToken() {
     return cachedToken.token;
   }
 
-  const clientId = process.env.EVIDENCE_CLIENT_ID;
-  const clientSecret = process.env.EVIDENCE_API_SECRET;
-  const partnerId = process.env.EVIDENCE_PARTNER_ID;
+  // Get credentials and strip quotes if present (Next.js includes quotes from .env.local)
+  let clientId = process.env.EVIDENCE_CLIENT_ID?.trim();
+  let clientSecret = process.env.EVIDENCE_API_SECRET?.trim();
+  let partnerId = process.env.EVIDENCE_PARTNER_ID?.trim();
 
-  if (!clientId || !clientSecret || !partnerId) {
-    throw new Error('Evidence.com API credentials not configured');
+  // Remove surrounding quotes if present
+  if (clientId?.startsWith('"') && clientId?.endsWith('"')) {
+    clientId = clientId.slice(1, -1);
+  }
+  if (clientSecret?.startsWith('"') && clientSecret?.endsWith('"')) {
+    clientSecret = clientSecret.slice(1, -1);
+  }
+  if (partnerId?.startsWith('"') && partnerId?.endsWith('"')) {
+    partnerId = partnerId.slice(1, -1);
   }
 
-  // Try different Evidence.com OAuth endpoints
-  const endpoints = [
-    'https://api.evidence.com/oauth2/token',
-    'https://evidence.com/api/oauth2/token',
-    `https://${partnerId}.evidence.com/api/oauth2/token`,
+  if (!clientId || !clientSecret || !partnerId) {
+    const missing = [];
+    if (!clientId) missing.push('EVIDENCE_CLIENT_ID');
+    if (!clientSecret) missing.push('EVIDENCE_API_SECRET');
+    if (!partnerId) missing.push('EVIDENCE_PARTNER_ID');
+    throw new Error(`Evidence.com API credentials not configured. Missing: ${missing.join(', ')}`);
+  }
+
+  // Debug logging (without exposing full secrets)
+  console.log(`[Evidence.com] Using CLIENT_ID: ${clientId.substring(0, 8)}... (length: ${clientId.length})`);
+  console.log(`[Evidence.com] Using SECRET: ${clientSecret.substring(0, 8)}... (length: ${clientSecret.length})`);
+  console.log(`[Evidence.com] Using PARTNER_ID: ${partnerId}`);
+
+  // Try different Evidence.com authentication methods
+  // Evidence.com might use OAuth2, Basic Auth, or API keys
+  
+  // Method 1: Try OAuth2 with different scopes and endpoints
+  const oauthConfigs = [
+    { endpoint: `https://${partnerId}.evidence.com/api/oauth2/token`, scope: 'any.read' },
+    { endpoint: `https://${partnerId}.evidence.com/api/oauth2/token`, scope: 'read' },
+    { endpoint: `https://${partnerId}.evidence.com/api/oauth2/token`, scope: '' }, // No scope
+    { endpoint: `https://${partnerId}.evidence.com/api/oauth2/token`, scope: 'evidence.read' },
+    { endpoint: `https://${partnerId}.evidence.com/api/oauth2/token`, scope: 'media.read' },
+    { endpoint: 'https://api.evidence.com/oauth2/token', scope: 'any.read' },
+    { endpoint: 'https://api.evidence.com/oauth2/token', scope: 'read' },
   ];
+
+  // Method 2: Try Basic Authentication (some APIs use this)
+  const basicAuthToken = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
   let tokenResponse: Response | null = null;
   let lastError = '';
+  let successfulEndpoint = '';
+  let authMethod = '';
 
-  for (const endpoint of endpoints) {
+  // First, try OAuth2 client credentials flow
+  for (const config of oauthConfigs) {
     try {
-      tokenResponse = await fetch(endpoint, {
+      console.log(`[Evidence.com] Trying auth endpoint: ${config.endpoint} with scope: ${config.scope}`);
+      
+      tokenResponse = await fetch(config.endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: clientId,
-          client_secret: clientSecret,
-          scope: 'read',
-        }),
+        body: (() => {
+          const params: Record<string, string> = {
+            grant_type: 'client_credentials',
+            client_id: clientId,
+            client_secret: clientSecret,
+          };
+          if (config.scope) {
+            params.scope = config.scope;
+          }
+          return new URLSearchParams(params);
+        })(),
       });
 
       if (tokenResponse.ok) {
+        successfulEndpoint = config.endpoint;
+        console.log(`[Evidence.com] Authentication successful with ${config.endpoint}`);
         break; // Success!
       }
-      lastError = `${endpoint}: ${tokenResponse.status}`;
+      
+      const errorText = await tokenResponse.text().catch(() => '');
+      let errorDetails = errorText;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetails = JSON.stringify(errorJson, null, 2);
+      } catch {
+        // Not JSON, use as-is
+      }
+      lastError = `${config.endpoint} (scope: ${config.scope}): ${tokenResponse.status}\n${errorDetails.substring(0, 500)}`;
+      console.log(`[Evidence.com] Auth failed: ${lastError}`);
     } catch (err: any) {
-      lastError = `${endpoint}: ${err.message}`;
+      lastError = `${config.endpoint}: ${err.message}`;
+      console.log(`[Evidence.com] Auth error: ${lastError}`);
     }
   }
 
+  // If OAuth2 failed, try using credentials directly as API keys
   if (!tokenResponse || !tokenResponse.ok) {
-    throw new Error(`Failed to get Evidence.com token from any endpoint. Last error: ${lastError}`);
+    console.log('[Evidence.com] OAuth2 failed, will try direct API key authentication for video endpoints');
+    // Return null to indicate we should try direct auth
+    return null;
   }
 
   const tokenData = await tokenResponse.json();
+  
+  if (!tokenData.access_token) {
+    console.error('[Evidence.com] Token response missing access_token:', tokenData);
+    throw new Error('Token response missing access_token field');
+  }
 
   // Cache token (expires in 1 hour by default, we'll refresh 5 min early)
   cachedToken = {
@@ -63,6 +125,7 @@ async function getEvidenceToken() {
     expiresAt: Date.now() + ((tokenData.expires_in || 3600) - 300) * 1000,
   };
 
+  console.log(`[Evidence.com] Token cached, expires in ${tokenData.expires_in || 3600}s`);
   return cachedToken.token;
 }
 
@@ -117,74 +180,236 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const token = await getEvidenceToken();
-
-    // Fetch videos from Evidence.com API
-    // Common endpoints: /api/v2/media or /api/v2/files
-    const response = await fetch('https://api.evidence.com/api/v2/media', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      // Try alternative endpoint if first one fails
-      const altResponse = await fetch('https://api.evidence.com/api/v2/files', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!altResponse.ok) {
-        const errorText = await altResponse.text();
-        throw new Error(`Failed to fetch videos: ${altResponse.status} ${errorText}`);
-      }
-
-      const data = await altResponse.json();
-      return NextResponse.json({
-        success: true,
-        videos: data.items || data.files || data.data || [],
-        source: 'evidence.com',
-        endpoint: '/api/v2/files',
-      });
+    // Get credentials (strip quotes if present)
+    let partnerId = process.env.EVIDENCE_PARTNER_ID?.trim();
+    let clientId = process.env.EVIDENCE_CLIENT_ID?.trim();
+    let clientSecret = process.env.EVIDENCE_API_SECRET?.trim();
+    
+    // Remove surrounding quotes if present
+    if (partnerId?.startsWith('"') && partnerId?.endsWith('"')) {
+      partnerId = partnerId.slice(1, -1);
+    }
+    if (clientId?.startsWith('"') && clientId?.endsWith('"')) {
+      clientId = clientId.slice(1, -1);
+    }
+    if (clientSecret?.startsWith('"') && clientSecret?.endsWith('"')) {
+      clientSecret = clientSecret.slice(1, -1);
     }
 
-    const data = await response.json();
+    // Try to get OAuth token, but if it fails, we'll use direct auth
+    const token = await getEvidenceToken();
+    const useDirectAuth = token === null;
+    
+    // Prepare auth headers
+    let authHeaders: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+    
+    if (useDirectAuth) {
+      // Use credentials directly as API keys (common for Evidence.com)
+      console.log('[Evidence.com] Using direct API key authentication');
+      // Try multiple auth header combinations
+      const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+      authHeaders['Authorization'] = `Basic ${basicAuth}`;
+      authHeaders['X-API-Key'] = clientSecret || '';
+      authHeaders['X-Client-ID'] = clientId || '';
+      authHeaders['X-Partner-ID'] = partnerId || '';
+    } else {
+      authHeaders['Authorization'] = `Bearer ${token}`;
+    }
 
-    // Transform Evidence.com video data to our format
-    const videos = (data.items || data.media || data.data || []).map((video: any) => ({
-      id: video.id || video.file_id,
-      title: video.title || video.filename || video.name,
-      url: video.url || video.download_url,
-      thumbnailUrl: video.thumbnail_url || video.thumbnail,
-      duration: video.duration,
-      size: video.size,
-      uploadDate: video.created_at || video.upload_date,
-      category: 'bwc', // Tag as body-worn camera
-      metadata: video,
-    }));
+    // Try multiple base URLs and endpoints
+    const baseUrls = [
+      'https://api.evidence.com',
+      `https://${partnerId}.evidence.com`,
+      `https://${partnerId}`,
+    ];
 
-    return NextResponse.json({
-      success: true,
-      videos,
-      source: 'evidence.com',
-      count: videos.length,
-    });
+    const endpoints = [
+      '/api/v2/media',
+      '/api/v2/files',
+      '/api/v2/evidence',
+      '/api/v1/media',
+      '/api/v1/files',
+      '/api/v2/media/files',
+      '/api/v2/evidence/files',
+      '/api/media',
+      '/api/files',
+      '/api/evidence',
+      '/api/v2/videos',
+      '/api/videos',
+    ];
+
+    let lastError = '';
+    let successfulUrl = '';
+    let successfulEndpoint = '';
+    let lastResponseStatus = 0;
+    let lastResponseText = '';
+
+    // Try all combinations
+    for (const baseUrl of baseUrls) {
+      for (const endpoint of endpoints) {
+        const fullUrl = `${baseUrl}${endpoint}`;
+        try {
+          console.log(`[Evidence.com] Trying video endpoint: ${fullUrl}`);
+          
+          const response = await fetch(fullUrl, {
+            method: 'GET',
+            headers: authHeaders,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`[Evidence.com] Successfully fetched from ${fullUrl}, response keys:`, Object.keys(data));
+            
+            // Check if response has video data
+            const videoData = data.items || data.media || data.files || data.data || data.results || [];
+            
+            if (Array.isArray(videoData) && videoData.length >= 0) {
+              successfulUrl = baseUrl;
+              successfulEndpoint = endpoint;
+              
+              // Transform Evidence.com video data to our format
+              const videos = videoData.map((video: any) => ({
+                id: video.id || video.file_id || video.media_id || video.evidence_id,
+                title: video.title || video.filename || video.name || video.description || 'Untitled Video',
+                url: video.url || video.download_url || video.media_url || video.file_url,
+                thumbnailUrl: video.thumbnail_url || video.thumbnail || video.preview_url,
+                duration: video.duration || video.length || video.duration_seconds,
+                size: video.size || video.file_size || video.size_bytes,
+                uploadDate: video.created_at || video.upload_date || video.date_created || video.created,
+                category: 'bwc', // Tag as body-worn camera
+                metadata: video,
+              }));
+
+              console.log(`[Evidence.com] Transformed ${videos.length} videos`);
+              
+              return NextResponse.json({
+                success: true,
+                videos,
+                source: 'evidence.com',
+                count: videos.length,
+                endpoint: `${successfulUrl}${successfulEndpoint}`,
+              });
+            }
+          } else {
+            const errorText = await response.text().catch(() => '');
+            lastError = `${fullUrl}: ${response.status} ${errorText.substring(0, 200)}`;
+            lastResponseStatus = response.status;
+            lastResponseText = errorText.substring(0, 500);
+            console.log(`[Evidence.com] Endpoint failed (${response.status}): ${lastError}`);
+            
+            // If we get 401/403, try different auth header combinations
+            if ((response.status === 401 || response.status === 403) && useDirectAuth) {
+              console.log(`[Evidence.com] Trying alternative auth headers for ${fullUrl}`);
+              
+              // Try with just Basic Auth
+              const altResponse1 = await fetch(fullUrl, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+                  'Accept': 'application/json',
+                },
+              });
+              
+              if (altResponse1.ok) {
+                const data = await altResponse1.json();
+                const videoData = data.items || data.media || data.files || data.data || data.results || [];
+                if (Array.isArray(videoData)) {
+                  successfulUrl = baseUrl;
+                  successfulEndpoint = endpoint;
+                  const videos = videoData.map((video: any) => ({
+                    id: video.id || video.file_id || video.media_id || video.evidence_id,
+                    title: video.title || video.filename || video.name || video.description || 'Untitled Video',
+                    url: video.url || video.download_url || video.media_url || video.file_url,
+                    thumbnailUrl: video.thumbnail_url || video.thumbnail || video.preview_url,
+                    duration: video.duration || video.length || video.duration_seconds,
+                    size: video.size || video.file_size || video.size_bytes,
+                    uploadDate: video.created_at || video.upload_date || video.date_created || video.created,
+                    category: 'bwc',
+                    metadata: video,
+                  }));
+                  return NextResponse.json({
+                    success: true,
+                    videos,
+                    source: 'evidence.com',
+                    count: videos.length,
+                    endpoint: `${successfulUrl}${successfulEndpoint}`,
+                    authMethod: 'Basic Auth',
+                  });
+                }
+              }
+              
+              // Try with API key headers only
+              const altResponse2 = await fetch(fullUrl, {
+                method: 'GET',
+                headers: {
+                  'X-API-Key': clientSecret || '',
+                  'X-Client-ID': clientId || '',
+                  'Accept': 'application/json',
+                },
+              });
+              
+              if (altResponse2.ok) {
+                const data = await altResponse2.json();
+                const videoData = data.items || data.media || data.files || data.data || data.results || [];
+                if (Array.isArray(videoData)) {
+                  successfulUrl = baseUrl;
+                  successfulEndpoint = endpoint;
+                  const videos = videoData.map((video: any) => ({
+                    id: video.id || video.file_id || video.media_id || video.evidence_id,
+                    title: video.title || video.filename || video.name || video.description || 'Untitled Video',
+                    url: video.url || video.download_url || video.media_url || video.file_url,
+                    thumbnailUrl: video.thumbnail_url || video.thumbnail || video.preview_url,
+                    duration: video.duration || video.length || video.duration_seconds,
+                    size: video.size || video.file_size || video.size_bytes,
+                    uploadDate: video.created_at || video.upload_date || video.date_created || video.created,
+                    category: 'bwc',
+                    metadata: video,
+                  }));
+                  return NextResponse.json({
+                    success: true,
+                    videos,
+                    source: 'evidence.com',
+                    count: videos.length,
+                    endpoint: `${successfulUrl}${successfulEndpoint}`,
+                    authMethod: 'API Key Headers',
+                  });
+                }
+              }
+            }
+          }
+        } catch (err: any) {
+          lastError = `${fullUrl}: ${err.message}`;
+          console.log(`[Evidence.com] Endpoint error: ${lastError}`);
+        }
+      }
+    }
+
+    // If we got here, all endpoints failed
+    throw new Error(`Failed to fetch videos from any endpoint. Last error: ${lastError}`);
   } catch (error: any) {
-    console.error('Error fetching Evidence.com videos:', error);
+    console.error('[Evidence.com] Error fetching videos:', error);
 
-    // Return helpful error with suggestion to use demo mode
-    return NextResponse.json(
-      {
-        error: error.message || 'Failed to fetch Evidence.com videos',
-        details: error.toString(),
-        hint: 'Add ?demo=true to the URL to see demo data, or verify your Evidence.com API credentials and endpoint',
-      },
-      { status: 500 }
-    );
+    // Return helpful error with debugging info
+    const errorResponse: any = {
+      error: error.message || 'Failed to fetch Evidence.com videos',
+      details: error.toString(),
+      hint: 'Verify your Evidence.com API credentials and endpoints. Check server logs for detailed error messages.',
+    };
+
+    // Add environment check info (without exposing secrets)
+    const hasClientId = !!process.env.EVIDENCE_CLIENT_ID;
+    const hasSecret = !!process.env.EVIDENCE_API_SECRET;
+    const hasPartnerId = !!process.env.EVIDENCE_PARTNER_ID;
+    
+    errorResponse.config = {
+      hasClientId,
+      hasSecret,
+      hasPartnerId,
+      partnerId: hasPartnerId ? process.env.EVIDENCE_PARTNER_ID : 'not set',
+    };
+
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
