@@ -22,7 +22,7 @@ Built for TwelveLabs Product Manager interview (Government + Secure Deployment r
 # Install dependencies
 npm install
 
-# Run development server (default port 3000)
+# Run development server (port 2000)
 npm run dev
 
 # Build for production
@@ -105,6 +105,14 @@ Dashboard-first design (max 2 clicks to any feature):
 - `/search` - Search interface
 - `/analyze/[videoId]` - Video analysis results
 - `/insights` - Government deployment insights
+
+### Components
+
+Key UI components in `/components`:
+
+- `Header.tsx` / `FooterNav.tsx` / `MobileNav.tsx` - Navigation layout
+- `VideoPlayerModal.tsx` - HLS video playback with `hls.js`
+- `/ui` - Reusable primitives (Button, Card, Badge)
 
 ## Key Implementation Details
 

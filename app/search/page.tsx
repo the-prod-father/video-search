@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Clock, Video, AlertCircle, Play, Loader2 } from 'lucide-react';
+import VideoPlayerModal from '@/components/VideoPlayerModal';
 
 interface Index {
   id: string;
@@ -31,6 +32,15 @@ function SearchPageContent() {
   const [searching, setSearching] = useState(false);
   const [processingTime, setProcessingTime] = useState<number>(0);
   const [error, setError] = useState<string>('');
+  const [hasSearched, setHasSearched] = useState(false);
+  const [selectedClip, setSelectedClip] = useState<{
+    videoId: string;
+    videoUrl: string | null;
+    startTime: number;
+    endTime: number;
+    title?: string;
+  } | null>(null);
+  const [loadingVideoUrl, setLoadingVideoUrl] = useState(false);
 
   useEffect(() => {
     fetchIndexes();
@@ -40,6 +50,7 @@ function SearchPageContent() {
       setSelectedIndex(indexIdParam);
     }
   }, [searchParams]);
+
 
   const fetchIndexes = async () => {
     try {
@@ -61,6 +72,7 @@ function SearchPageContent() {
     setSearching(true);
     setError('');
     setResults([]);
+    setHasSearched(true);
 
     try {
       const response = await fetch('/api/search', {
@@ -106,12 +118,100 @@ function SearchPageContent() {
     return 'Possible Match';
   };
 
+  const handleWatchClip = async (result: SearchResult) => {
+    const videoId = result.video_id || '';
+    if (!videoId) {
+      setError('Video ID not available');
+      return;
+    }
+
+    setLoadingVideoUrl(true);
+    try {
+      // Find the index ID from the selected index
+      const index = indexes.find(i => i.id === selectedIndex);
+      if (!index) {
+        throw new Error('Index not found');
+      }
+
+      // Fetch video details to get the HLS URL
+      const videoResponse = await fetch(`/api/videos?indexId=${selectedIndex}`);
+      const videoData = await videoResponse.json();
+      
+      if (!videoResponse.ok) {
+        throw new Error(videoData.error || 'Failed to fetch video details');
+      }
+
+      const video = videoData.videos?.find((v: any) => v.id === videoId);
+      if (!video) {
+        throw new Error('Video not found');
+      }
+
+      // Check both video_url and videoUrl formats
+      const videoUrl = video.hls?.video_url || video.hls?.videoUrl || null;
+      const hlsStatus = video.hls?.status;
+      
+      console.log('Video details:', {
+        videoId,
+        hls: video.hls,
+        videoUrl,
+        hasHls: !!video.hls,
+        hlsStatus,
+        fullVideo: video,
+      });
+      
+      if (!videoUrl) {
+        throw new Error(
+          `Video URL not available. HLS status: ${hlsStatus || 'unknown'}. ` +
+          `The video may still be processing. Please try again later.`
+        );
+      }
+
+      // Accept various completion statuses: 'ready', 'COMPLETE', 'complete', etc.
+      const isReady = !hlsStatus || 
+        hlsStatus.toLowerCase() === 'ready' || 
+        hlsStatus.toLowerCase() === 'complete' ||
+        hlsStatus.toLowerCase() === 'completed';
+      
+      if (!isReady) {
+        throw new Error(
+          `Video is not ready for playback. Status: ${hlsStatus}. ` +
+          `Please wait for processing to complete and try again.`
+        );
+      }
+      
+      setSelectedClip({
+        videoId,
+        videoUrl,
+        startTime: result.start,
+        endTime: result.end,
+        title: video.metadata?.filename || 'Video Clip',
+      });
+    } catch (error: any) {
+      console.error('Error loading video:', error);
+      setError(error.message || 'Failed to load video');
+    } finally {
+      setLoadingVideoUrl(false);
+    }
+  };
+
   const exampleQueries = [
-    'person demonstrating device',
-    'officer speaking',
-    'live stream',
-    'recording button',
+    'person with white shirt',
+    'person appearing multiple times',
+    'inside building',
+    'outdoor location',
+    'daytime scene',
+    'nighttime scene',
+    'person walking',
+    'person standing still',
+    'person talking',
+    'person running',
+    'vehicle in frame',
+    'multiple people together',
+    'person entering room',
+    'person leaving area',
+    'person carrying object',
   ];
+
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-6">
@@ -161,26 +261,39 @@ function SearchPageContent() {
               </div>
             </div>
 
-            {/* Example Buttons - Big and Clear */}
+            {/* Example Queries - Swipeable Horizontal Scroll */}
             <div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm font-medium text-muted-foreground mb-3">
                 💡 Click an example to try:
               </p>
-              <div className="flex flex-wrap gap-3">
-                {exampleQueries.map((example) => (
-                  <Button
-                    key={example}
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={() => setQuery(example)}
-                    disabled={searching}
-                    className="text-base"
-                  >
-                    {example}
-                  </Button>
-                ))}
+              
+              {/* Horizontal Scrollable Container */}
+              <div className="relative">
+                <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth pb-2 -mx-1 px-1">
+                  {exampleQueries.map((example) => (
+                    <Button
+                      key={example}
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setQuery(example)}
+                      disabled={searching}
+                      className="text-sm sm:text-base whitespace-nowrap flex-shrink-0 snap-start border-2 border-[#E2E8F0] hover:border-[#2563EB] hover:text-[#2563EB] hover:bg-[#F0F9FF] transition-all px-4 sm:px-6"
+                    >
+                      {example}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Gradient Fade Indicators */}
+                <div className="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-[#FFFEF9] to-transparent pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-[#FFFEF9] to-transparent pointer-events-none" />
               </div>
+              
+              {/* Swipe Hint */}
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Swipe or scroll to see more examples
+              </p>
             </div>
 
             {/* Index Selection - Hidden if only one */}
@@ -314,9 +427,23 @@ function SearchPageContent() {
                       </div>
 
                       {/* Action Button */}
-                      <Button size="lg" className="w-full md:w-auto">
-                        <Play className="mr-2 h-5 w-5" />
-                        Watch This Clip
+                      <Button 
+                        size="lg" 
+                        className="w-full md:w-auto"
+                        onClick={() => handleWatchClip(result)}
+                        disabled={loadingVideoUrl || searching}
+                      >
+                        {loadingVideoUrl ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="mr-2 h-5 w-5" />
+                            Watch This Clip
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -327,8 +454,8 @@ function SearchPageContent() {
         </div>
       )}
 
-      {/* No Results */}
-      {!searching && results.length === 0 && query && !error && (
+      {/* No Results - Only show after a search has been performed */}
+      {!searching && hasSearched && results.length === 0 && query && !error && (
         <Card className="border-2">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Search className="h-24 w-24 text-muted-foreground mb-6" />
@@ -339,12 +466,27 @@ function SearchPageContent() {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => setQuery(exampleQueries[0])}
+              onClick={() => {
+                setQuery(exampleQueries[0]);
+                setHasSearched(false);
+              }}
             >
               Try an example search
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Video Player Modal */}
+      {selectedClip && (
+        <VideoPlayerModal
+          isOpen={!!selectedClip}
+          onClose={() => setSelectedClip(null)}
+          videoUrl={selectedClip.videoUrl}
+          startTime={selectedClip.startTime}
+          endTime={selectedClip.endTime}
+          title={selectedClip.title}
+        />
       )}
     </div>
   );
