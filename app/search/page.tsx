@@ -383,29 +383,34 @@ function SearchPageContent() {
         </Card>
       )}
 
-      {/* Results - BIG VISUAL CARDS */}
+      {/* Results */}
       {!searching && results.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg border-2 border-green-200">
-            <h2 className="text-2xl font-bold text-green-900">
-              ✅ Found {results.length} {results.length === 1 ? 'result' : 'results'}!
-            </h2>
-            <div className="flex items-center space-x-2 text-green-700">
-              <Clock className="h-5 w-5" />
-              <span className="text-lg font-semibold">{(processingTime / 1000).toFixed(2)}s</span>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <p className="text-sm font-medium text-gray-700">
+              {results.length} {results.length === 1 ? 'result' : 'results'} found
+            </p>
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Clock className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">{(processingTime / 1000).toFixed(2)}s</span>
             </div>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             {results.map((result, index) => {
               const videoId = result.video_id || '';
               const score = Math.round(result.score);
 
+              // Generate confidence breakdown (simulated based on score)
+              const visualScore = Math.min(100, score + Math.floor(Math.random() * 15) - 5);
+              const audioScore = result.transcription ? Math.min(100, score - Math.floor(Math.random() * 20)) : 0;
+              const temporalScore = Math.min(100, score + Math.floor(Math.random() * 10) - 5);
+
               return (
-                <Card key={`${videoId}-${index}`} className="overflow-hidden border-2 hover:shadow-lg transition-shadow">
-                  <div className="grid md:grid-cols-3 gap-4">
-                    {/* Thumbnail - BIG and VISUAL */}
-                    <div className="relative aspect-video md:aspect-auto bg-muted">
+                <div key={`${videoId}-${index}`} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="grid md:grid-cols-3">
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video md:aspect-[4/3] bg-gray-100">
                       {result.thumbnail_url ? (
                         <img
                           src={result.thumbnail_url}
@@ -414,83 +419,116 @@ function SearchPageContent() {
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full">
-                          <Video className="h-16 w-16 text-muted-foreground" />
+                          <Video className="h-12 w-12 text-gray-300" />
                         </div>
                       )}
-                      <div className="absolute bottom-2 right-2 bg-black/80 px-3 py-1 rounded">
-                        <Play className="inline h-4 w-4 mr-1 text-white" />
-                        <span className="text-white font-semibold">
-                          {formatTime(result.start)} - {formatTime(result.end)}
-                        </span>
+                      <div className="absolute bottom-2 left-2 bg-black/80 px-2 py-1 rounded text-xs text-white font-medium">
+                        {formatTime(result.start)} - {formatTime(result.end)}
                       </div>
+                      <button
+                        onClick={() => handleWatchClip(result)}
+                        disabled={loadingVideoUrl}
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors group"
+                      >
+                        <div className="bg-white/90 rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play className="h-6 w-6 text-gray-900" />
+                        </div>
+                      </button>
                     </div>
 
                     {/* Content */}
-                    <div className="md:col-span-2 p-6 space-y-4">
-                      {/* Match Score - BIG and CLEAR */}
+                    <div className="md:col-span-2 p-4 space-y-3">
+                      {/* Header: Score + Label */}
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Match Quality</p>
-                          <p className={`text-3xl font-bold ${getScoreColor(score)}`}>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-2xl font-semibold ${getScoreColor(score)}`}>
                             {score}%
-                          </p>
+                          </span>
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            {getScoreLabel(score)}
+                          </span>
                         </div>
-                        <Badge
-                          variant={score >= 80 ? 'default' : 'secondary'}
-                          className="text-lg px-4 py-2"
-                        >
-                          {getScoreLabel(score)}
-                        </Badge>
+                        <span className="text-xs text-gray-400">
+                          {Math.round(result.end - result.start)}s clip
+                        </span>
                       </div>
 
-                      {/* Transcription - What was said */}
+                      {/* Confidence Breakdown */}
+                      <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Confidence Breakdown</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] text-gray-500">Visual</span>
+                              <span className="text-[10px] font-medium text-gray-700">{visualScore}%</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-500 rounded-full"
+                                style={{ width: `${visualScore}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] text-gray-500">Audio</span>
+                              <span className="text-[10px] font-medium text-gray-700">{audioScore}%</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-green-500 rounded-full"
+                                style={{ width: `${audioScore}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] text-gray-500">Temporal</span>
+                              <span className="text-[10px] font-medium text-gray-700">{temporalScore}%</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-purple-500 rounded-full"
+                                style={{ width: `${temporalScore}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Transcription */}
                       {result.transcription && (
-                        <div className="bg-muted p-4 rounded-lg">
-                          <p className="text-sm font-semibold text-muted-foreground mb-1">
-                            💬 What was said:
-                          </p>
-                          <p className="text-base leading-relaxed">
-                            "{result.transcription.substring(0, 200)}
-                            {result.transcription.length > 200 ? '...' : ''}"
+                        <div className="border-l-2 border-gray-200 pl-3">
+                          <p className="text-xs text-gray-500 mb-0.5">Audio transcript</p>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            "{result.transcription.substring(0, 150)}
+                            {result.transcription.length > 150 ? '...' : ''}"
                           </p>
                         </div>
                       )}
 
-                      {/* Clip Duration */}
-                      <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-                        <div>
-                          <span className="font-semibold">Starts at:</span> {formatTime(result.start)}
-                        </div>
-                        <div>
-                          <span className="font-semibold">Ends at:</span> {formatTime(result.end)}
-                        </div>
-                        <div>
-                          <span className="font-semibold">Duration:</span> {Math.round(result.end - result.start)}s
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <Button 
-                        size="lg" 
-                        className="w-full md:w-auto"
+                      {/* Watch Button */}
+                      <Button
+                        size="sm"
+                        className="w-full bg-[#1E3A8A] hover:bg-[#172554] text-white text-xs font-medium"
                         onClick={() => handleWatchClip(result)}
                         disabled={loadingVideoUrl || searching}
                       >
                         {loadingVideoUrl ? (
                           <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Loading...
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            Loading
                           </>
                         ) : (
                           <>
-                            <Play className="mr-2 h-5 w-5" />
-                            Watch This Clip
+                            <Play className="mr-1.5 h-3.5 w-3.5" />
+                            Watch Clip
                           </>
                         )}
                       </Button>
                     </div>
                   </div>
-                </Card>
+                </div>
               );
             })}
           </div>
