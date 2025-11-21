@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Menu, X, BarChart3, Database, Video, Search, Shield } from 'lucide-react';
+import { Menu, X, BarChart3, Database, Video, Search, Shield, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MobileNav() {
@@ -65,6 +65,25 @@ export default function MobileNav() {
                     </button>
                   );
                 })}
+
+                {/* Highlighted Article Link */}
+                <div className="pt-2 mt-2 border-t border-gray-200">
+                  <button
+                    onClick={() => handleNavClick('/article')}
+                    className={`
+                      flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition-colors w-full
+                      ${
+                        pathname === '/article'
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }
+                    `}
+                  >
+                    <FileText className="h-5 w-5" />
+                    <span>Training Data Reality</span>
+                    <span className="ml-auto text-[10px] uppercase tracking-wide opacity-70">Must Read</span>
+                  </button>
+                </div>
               </div>
             </nav>
           </div>
