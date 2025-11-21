@@ -67,6 +67,7 @@ export default function Dashboard() {
     title: string;
   } | null>(null);
   const [loadingVideoUrl, setLoadingVideoUrl] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -282,74 +283,181 @@ export default function Dashboard() {
     );
   }
 
+  // Example queries for the chips
+  const exampleQueries = [
+    'officer draws weapon',
+    'vehicle pursuit',
+    'verbal altercation',
+    'person in red jacket',
+    'handcuffs',
+    'license plate'
+  ];
+
+  const handleSearch = (query: string) => {
+    const searchParams = new URLSearchParams();
+    if (query) searchParams.set('q', query);
+    if (indexes.length > 0) searchParams.set('indexId', indexes[0].id);
+    router.push(`/search?${searchParams.toString()}`);
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      {/* Hero Section - Simplified and Mobile-First */}
-      <div className="bg-[#FFFEF9] rounded-xl sm:rounded-2xl p-6 sm:p-8 border border-[#E8E6E0]">
-        <div className="space-y-6 sm:space-y-8">
-          {/* Title Section */}
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#2563EB] flex items-center justify-center flex-shrink-0">
-                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1E3A8A] tracking-tight">
-                Digital Evidence Intelligence
-              </h1>
+      {/* NEW HERO - Problem → Solution → Proof */}
+      <div className="bg-gradient-to-br from-[#1E3A8A] via-[#1E40AF] to-[#2563EB] rounded-xl sm:rounded-2xl p-6 sm:p-10 lg:p-12 text-white relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+        </div>
+
+        <div className="relative z-10 space-y-6 sm:space-y-8">
+          {/* Pain Point & Solution */}
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium">
+              <Zap className="h-4 w-4 text-yellow-300" />
+              <span>AI-Powered Evidence Search</span>
             </div>
-            <p className="text-base sm:text-lg text-[#475569] leading-relaxed">
-              Find critical evidence in video footage instantly. Search by objects, actions, conversations, and text—no manual review required.
-            </p>
-            <p className="text-sm text-[#64748B]">
-              <span className="font-semibold text-[#2563EB]">For Digital Forensics Teams:</span> Transform hours of video review into seconds.
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+              Find the Critical Moment<br className="hidden sm:block" /> in Seconds, Not Hours
+            </h1>
+
+            <p className="text-lg sm:text-xl text-white/80 max-w-2xl leading-relaxed">
+              Officers spend <span className="text-yellow-300 font-semibold">4+ hours per incident</span> reviewing video evidence.
+              Search by objects, actions, speech, and text—instantly.
             </p>
           </div>
 
-          {/* Action Buttons - Simplified Two-Button Layout */}
-          <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
-            {/* Primary Action - Search Evidence */}
-            <Button
-              size="lg"
-              className="w-full sm:flex-1 h-12 sm:h-11 bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 rounded-xl"
-              onClick={() => router.push('/search')}
-            >
-              <Search className="mr-2 h-5 w-5" />
-              <span className="text-base">Search Evidence</span>
-            </Button>
-            
-            {/* Secondary Action - Sync Evidence.com */}
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full sm:flex-1 h-12 sm:h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#2563EB] hover:text-[#2563EB] active:bg-[#F1F5F9] font-medium shadow-sm hover:shadow-md transition-all duration-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={async () => {
-                setEvidenceLoading(true);
-                setEvidenceError(null);
-                setEvidenceSuccess(false);
-                try {
-                  await fetchSpecificEvidence('A8C1377632F64E1D97235886047E1BE4');
-                } catch (error: any) {
-                  setEvidenceError(error.message);
-                } finally {
-                  setEvidenceLoading(false);
-                }
-              }}
-              disabled={evidenceLoading}
-            >
-              {evidenceLoading ? (
-                <>
-                  <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-[#2563EB] border-t-transparent" />
-                  <span className="text-base">Loading...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-5 w-5" />
-                  <span className="text-base">Sync Evidence.com</span>
-                </>
-              )}
-            </Button>
+          {/* Live Search Box */}
+          <div className="max-w-2xl">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search your evidence... (e.g., 'person with weapon')"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    handleSearch(searchQuery.trim());
+                  }
+                }}
+                className="w-full pl-12 pr-4 py-4 text-lg bg-white text-gray-900 rounded-xl border-2 border-transparent focus:border-yellow-300 focus:outline-none shadow-xl placeholder:text-gray-400"
+              />
+              <Button
+                onClick={() => searchQuery.trim() && handleSearch(searchQuery.trim())}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-semibold"
+              >
+                Search
+              </Button>
+            </div>
+
+            {/* Example Query Chips */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="text-sm text-white/60">Try:</span>
+              {exampleQueries.map((query) => (
+                <button
+                  key={query}
+                  onClick={() => handleSearch(query)}
+                  className="text-sm bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full transition-colors border border-white/20 hover:border-white/40"
+                >
+                  {query}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Differentiators */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-white/20">
+            {/* Accuracy by Video Type */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-white/10 rounded-lg">
+                <Eye className="h-5 w-5 text-yellow-300" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Tested on Real Video Quality</p>
+                <p className="text-xs text-white/60 mt-1">
+                  BWC 75-85% • CCTV 70-80% • iPhone 95%
+                </p>
+              </div>
+            </div>
+
+            {/* Deployment Options */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-white/10 rounded-lg">
+                <Shield className="h-5 w-5 text-green-300" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Government-Ready</p>
+                <p className="text-xs text-white/60 mt-1">
+                  Cloud • On-Premise • Air-Gapped
+                </p>
+              </div>
+            </div>
+
+            {/* Compliance */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-white/10 rounded-lg">
+                <Fingerprint className="h-5 w-5 text-blue-300" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Compliance Ready</p>
+                <p className="text-xs text-white/60 mt-1">
+                  FedRAMP • CJIS • ITAR pathways
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Secondary Actions Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button
+          variant="outline"
+          className="flex-1 h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#2563EB] hover:text-[#2563EB] font-medium rounded-xl"
+          onClick={() => router.push('/videos')}
+        >
+          <FileVideo className="mr-2 h-4 w-4" />
+          View All Evidence ({totalVideos})
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#2563EB] hover:text-[#2563EB] font-medium rounded-xl disabled:opacity-50"
+          onClick={async () => {
+            setEvidenceLoading(true);
+            setEvidenceError(null);
+            setEvidenceSuccess(false);
+            try {
+              await fetchSpecificEvidence('A8C1377632F64E1D97235886047E1BE4');
+            } catch (error: any) {
+              setEvidenceError(error.message);
+            } finally {
+              setEvidenceLoading(false);
+            }
+          }}
+          disabled={evidenceLoading}
+        >
+          {evidenceLoading ? (
+            <>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#2563EB] border-t-transparent" />
+              Syncing...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Sync from Evidence.com
+            </>
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#8B5CF6] hover:text-[#8B5CF6] font-medium rounded-xl"
+          onClick={() => router.push('/insights')}
+        >
+          <FileSearch className="mr-2 h-4 w-4" />
+          Deployment Guide
+        </Button>
       </div>
 
       {/* Evidence.com Sync Status - Mobile-Optimized */}

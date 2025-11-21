@@ -49,7 +49,50 @@ function SearchPageContent() {
     if (indexIdParam) {
       setSelectedIndex(indexIdParam);
     }
+    // Check if query is provided in URL params
+    const queryParam = searchParams.get('q');
+    if (queryParam) {
+      setQuery(queryParam);
+    }
   }, [searchParams]);
+
+  // Auto-search when query param is provided and indexes are loaded
+  useEffect(() => {
+    const queryParam = searchParams.get('q');
+    if (queryParam && indexes.length > 0 && selectedIndex && !hasSearched) {
+      // Trigger search automatically
+      const doSearch = async () => {
+        setSearching(true);
+        setError('');
+        setResults([]);
+        setHasSearched(true);
+
+        try {
+          const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              indexId: selectedIndex,
+              query: queryParam.trim(),
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            setResults(data.results || []);
+          } else {
+            setError(data.error || 'Search failed');
+          }
+        } catch (err) {
+          setError('Failed to perform search');
+        } finally {
+          setSearching(false);
+        }
+      };
+      doSearch();
+    }
+  }, [indexes, selectedIndex, searchParams, hasSearched]);
 
 
   const fetchIndexes = async () => {
