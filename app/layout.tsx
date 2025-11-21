@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { Video, Search, Database, BarChart3, Info, Shield, Zap, Menu, X } from "lucide-react";
+import { Video, Search, Database, BarChart3, Info, Shield, Zap, Menu, X, FileText, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import MobileNav from "@/components/MobileNav";
 
@@ -49,6 +49,21 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="min-h-screen bg-[#FAF8F2]">
+          {/* Announcement Banner */}
+          <Link
+            href="/article"
+            className="block bg-gradient-to-r from-amber-500 to-amber-600 text-white py-2 px-4 text-center hover:from-amber-600 hover:to-amber-700 transition-all"
+          >
+            <div className="container mx-auto flex items-center justify-center gap-2 text-xs sm:text-sm">
+              <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="font-medium">
+                <span className="hidden sm:inline">New Article: </span>
+                The Reality of Video AI in Public Safety
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 flex-shrink-0" />
+            </div>
+          </Link>
+
           {/* Navigation */}
           <nav className="border-b-2 border-[#E8E6E0] bg-[#FFFEF9]/95 backdrop-blur-md sticky top-0 z-50 shadow-md">
             <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
