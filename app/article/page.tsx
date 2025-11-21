@@ -21,33 +21,52 @@ export default function ArticlePage() {
       </Button>
 
       {/* Article Header */}
-      <article className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        {/* Hero */}
-        <div className="bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] p-8 sm:p-12 text-white">
-          <p className="text-sm font-medium text-white/70 uppercase tracking-wide mb-4">
-            Government & Secure Deployment
-          </p>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight mb-4">
-            The Reality of Video AI in Public Safety: Why Training Data Quality Matters More Than Model Size
-          </h1>
-          <p className="text-lg text-white/80 leading-relaxed max-w-2xl">
-            Understanding the critical factors that determine whether AI video analysis succeeds or fails in real-world law enforcement deployments.
-          </p>
+      <article className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        {/* Hero with Background Image */}
+        <div className="relative overflow-hidden">
+          {/* Background Image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: 'url(/body-cams.webp)' }}
+          />
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A8A]/95 via-[#1E40AF]/90 to-[#2563EB]/85" />
+
+          {/* Content */}
+          <div className="relative z-10 p-8 sm:p-12 lg:p-16 text-white">
+            <p className="text-xs sm:text-sm font-semibold text-amber-300 uppercase tracking-widest mb-4">
+              Government & Secure Deployment
+            </p>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6">
+              The Reality of Video AI in Public Safety
+            </h1>
+            <p className="text-xl sm:text-2xl font-light text-white/90 mb-6 max-w-2xl">
+              Why Training Data Quality Matters More Than Model Size
+            </p>
+            <p className="text-base sm:text-lg text-white/70 leading-relaxed max-w-2xl">
+              Understanding the critical factors that determine whether AI video analysis succeeds or fails in real-world law enforcement deployments.
+            </p>
+          </div>
         </div>
 
         {/* Author */}
-        <div className="border-b border-gray-200 p-6 sm:p-8">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-[#1E3A8A] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-              GM
-            </div>
+        <div className="border-b border-gray-100 p-6 sm:p-8 bg-gray-50/50">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <img
+              src="/profile.jpeg"
+              alt="Gavin McNamara"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
+            />
             <div>
-              <p className="font-semibold text-gray-900">Gavin McNamara</p>
+              <p className="font-bold text-gray-900 text-lg">Gavin McNamara</p>
+              <p className="text-sm text-[#2563EB] font-medium">
+                7+ Years @ Axon Enterprise
+              </p>
               <p className="text-sm text-gray-600">
-                7+ Years @ Axon Enterprise | Senior Product Manager, Evidence.com
+                Senior Product Manager, Evidence.com
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Former NYPD Onsite Team | Domestic & International Agency Deployments
+                Former NYPD Onsite Team • Domestic & International Agency Deployments
               </p>
             </div>
           </div>
