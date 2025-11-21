@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Clock, Video, AlertCircle, Play, Loader2 } from 'lucide-react';
+import { Search, Clock, Video, AlertCircle, Play, Loader2, Info, ChevronDown, Eye, AudioLines, Timer } from 'lucide-react';
 import VideoPlayerModal from '@/components/VideoPlayerModal';
 
 interface Index {
@@ -41,6 +41,7 @@ function SearchPageContent() {
     title?: string;
   } | null>(null);
   const [loadingVideoUrl, setLoadingVideoUrl] = useState(false);
+  const [showScoreExplainer, setShowScoreExplainer] = useState(false);
 
   useEffect(() => {
     fetchIndexes();
@@ -390,11 +391,66 @@ function SearchPageContent() {
             <p className="text-sm font-medium text-gray-700">
               {results.length} {results.length === 1 ? 'result' : 'results'} found
             </p>
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <Clock className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">{(processingTime / 1000).toFixed(2)}s</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowScoreExplainer(!showScoreExplainer)}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <Info className="h-3.5 w-3.5" />
+                <span>How scoring works</span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${showScoreExplainer ? 'rotate-180' : ''}`} />
+              </button>
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <Clock className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">{(processingTime / 1000).toFixed(2)}s</span>
+              </div>
             </div>
           </div>
+
+          {/* Score Explainer */}
+          {showScoreExplainer && (
+            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+              <p className="text-xs font-medium text-gray-900">Understanding Confidence Scores</p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Each result is analyzed across multiple modalities. The overall score reflects how well the clip matches your query.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex items-start gap-2">
+                  <div className="p-1.5 bg-blue-50 rounded">
+                    <Eye className="h-3.5 w-3.5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-900">Visual</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      Objects detected, actions recognized, scene context, people, movements
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="p-1.5 bg-green-50 rounded">
+                    <AudioLines className="h-3.5 w-3.5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-900">Audio</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      Speech transcription, tone analysis, keywords, background sounds
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="p-1.5 bg-purple-50 rounded">
+                    <Timer className="h-3.5 w-3.5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-900">Temporal</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      Event sequences, before/after context, action timing, scene transitions
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4">
             {results.map((result, index) => {
