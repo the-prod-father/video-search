@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Video, Search, Database, BarChart3, Home } from 'lucide-react';
+import { Video, Search, Database, BarChart3, Home, FileText } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -14,7 +14,6 @@ export default function Header() {
     { name: 'Search', path: '/search', icon: Search },
     { name: 'Videos', path: '/videos', icon: Video },
     { name: 'Indexes', path: '/indexes', icon: Database },
-    { name: 'Insights', path: '/insights', icon: BarChart3 },
   ];
 
   return (
@@ -49,21 +48,39 @@ export default function Header() {
                   key={item.path}
                   onClick={() => router.push(item.path)}
                   className={`
-                    flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-base
-                    transition-all duration-300 hover-lift shadow-md
+                    flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium text-sm
+                    transition-all duration-200
                     ${active
-                      ? 'bg-tiffany-800 text-white'
+                      ? 'bg-[#1E3A8A] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }
                   `}
                   aria-label={`Navigate to ${item.name}`}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                  <span>{item.name}</span>
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">{item.name}</span>
                 </button>
               );
             })}
+
+            {/* Highlighted Article Button */}
+            <button
+              onClick={() => router.push('/article')}
+              className={`
+                flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium text-sm
+                transition-all duration-200 ml-2
+                ${isActive('/article')
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300'
+                }
+              `}
+              aria-label="Read article on video AI training"
+            >
+              <FileText className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Training Data Reality</span>
+              <span className="sm:hidden">Article</span>
+            </button>
           </nav>
         </div>
       </div>
