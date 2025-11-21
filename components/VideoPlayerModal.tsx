@@ -77,20 +77,18 @@ export default function VideoPlayerModal({
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
-          // Log detailed error information for debugging
-          const errorDetails = {
+          // Only log fatal errors to avoid Next.js dev overlay noise
+          if (!data.fatal) {
+            // Non-fatal errors (buffer gaps, etc.) are handled automatically by HLS.js
+            return;
+          }
+
+          console.error('HLS fatal error:', {
             type: data.type,
             details: data.details,
-            fatal: data.fatal,
             url: data.url,
-            response: data.response,
-            error: data.error,
-            err: data.err,
-            context: data.context,
-            frag: data.frag ? { url: data.frag.url, type: data.frag.type } : null,
-          };
-          console.error('HLS error details:', errorDetails);
-          
+          });
+
           if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
