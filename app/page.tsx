@@ -303,7 +303,17 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* HERO - Clean, Minimal, Jony Ive-inspired */}
-      <div className="bg-gradient-to-b from-[#1E3A8A] to-[#1E40AF] rounded-2xl p-5 sm:p-8 lg:p-12 text-white">
+      <div className="relative rounded-2xl overflow-hidden text-white">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url(/body-cams.webp)' }}
+        />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1E3A8A]/95 to-[#1E40AF]/90" />
+
+        {/* Content */}
+        <div className="relative z-10 p-5 sm:p-8 lg:p-12">
         <div className="space-y-5 sm:space-y-6">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium tracking-wide">
@@ -377,6 +387,7 @@ export default function Dashboard() {
               <p className="text-[10px] sm:text-xs text-white/50 uppercase tracking-wide">Search Time</p>
             </div>
           </div>
+        </div>
         </div>
       </div>
 

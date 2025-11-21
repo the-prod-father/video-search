@@ -76,10 +76,18 @@ export default function ArticlePage() {
         <div className="p-6 sm:p-8 lg:p-12 space-y-8">
 
           {/* Introduction */}
-          <section className="space-y-4">
-            <p className="text-gray-700 leading-relaxed">
-              After seven years at Axon managing Evidence.com—the largest digital evidence management system in law enforcement—I've seen firsthand why most AI demos fail when they meet real-world video. The gap between controlled demonstrations and production deployments isn't about model architecture. It's about training data.
+          <section className="space-y-6">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              After seven years at Axon managing Evidence.com, the largest digital evidence management system in law enforcement, I've seen firsthand why most AI demos fail when they meet real-world video.
             </p>
+
+            {/* Pull Quote */}
+            <blockquote className="border-l-4 border-[#2563EB] pl-6 py-2 my-6">
+              <p className="text-xl font-medium text-gray-900 italic leading-relaxed">
+                "The gap between controlled demonstrations and production deployments isn't about model architecture. It's about training data."
+              </p>
+            </blockquote>
+
             <p className="text-gray-700 leading-relaxed">
               This article outlines the critical factors that determine whether video AI succeeds or fails in government deployments, drawn from my direct experience working with agencies from the NYPD to international law enforcement organizations.
             </p>
@@ -134,9 +142,16 @@ export default function ArticlePage() {
               </div>
             </div>
 
-            <p className="text-gray-700 leading-relaxed">
-              An AI model trained on YouTube videos or stock footage will report 95%+ accuracy. Deploy it on actual BWC footage from a night shift and watch that number plummet to 60%. This isn't a bug—it's a fundamental training data problem.
-            </p>
+            {/* Highlighted Statistic */}
+            <div className="bg-red-50 border border-red-200 rounded-xl p-5 my-6">
+              <p className="text-sm font-semibold text-red-800 uppercase tracking-wide mb-2">The Reality Check</p>
+              <p className="text-gray-800 leading-relaxed">
+                An AI model trained on YouTube videos or stock footage will report <span className="font-bold text-red-700">95%+ accuracy</span>. Deploy it on actual BWC footage from a night shift and watch that number <span className="font-bold text-red-700">plummet to 60%</span>.
+              </p>
+              <p className="text-sm text-red-700 font-medium mt-2">
+                This isn't a bug. It's a fundamental training data problem.
+              </p>
+            </div>
           </section>
 
           {/* Section 2: Compression Reality */}
@@ -169,9 +184,12 @@ export default function ArticlePage() {
                 <span><strong>Re-encoding during redaction</strong> compounding quality loss</span>
               </li>
             </ul>
-            <p className="text-gray-700 leading-relaxed">
-              If your model hasn't seen video at these quality levels during training, it will fail in production. Period.
-            </p>
+            {/* Key Insight */}
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
+              <p className="text-gray-800 font-medium">
+                If your model hasn't seen video at these quality levels during training, it <em>will</em> fail in production.
+              </p>
+            </div>
           </section>
 
           {/* Section 3: Time of Day */}
@@ -268,9 +286,13 @@ export default function ArticlePage() {
                 <span>Accent and dialect diversity for speech recognition</span>
               </li>
             </ul>
-            <p className="text-gray-700 leading-relaxed">
-              An AI that works better on some populations than others isn't just an accuracy problem—it's a civil rights problem. Agencies deploying biased AI face legal liability and public trust erosion.
-            </p>
+            {/* Warning Callout */}
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-5">
+              <p className="text-sm font-semibold text-purple-800 uppercase tracking-wide mb-2">Critical Warning</p>
+              <p className="text-gray-800 leading-relaxed">
+                An AI that works better on some populations than others isn't just an accuracy problem. <strong className="text-purple-800">It's a civil rights problem.</strong> Agencies deploying biased AI face legal liability and public trust erosion.
+              </p>
+            </div>
           </section>
 
           {/* Section 6: My Experience */}
@@ -282,8 +304,15 @@ export default function ArticlePage() {
             <p className="text-gray-700 leading-relaxed">
               At Axon, I owned Evidence.com including search, reporting, video playback, and third-party video ingestion. I saw these challenges daily across thousands of agencies.
             </p>
+            {/* Pull Quote */}
+            <blockquote className="border-l-4 border-[#2563EB] pl-6 py-2 my-6">
+              <p className="text-xl font-medium text-gray-900 italic leading-relaxed">
+                "I spent two years onsite with the NYPD, embedded with their team. This wasn't remote product management. I was in their building, seeing their workflows firsthand."
+              </p>
+            </blockquote>
+
             <p className="text-gray-700 leading-relaxed">
-              The breakthrough came through our NYPD partnership. I spent two years onsite with the NYPD, embedded with their team, with CJIS-certified access to their Evidence.com instance. This wasn't remote product management—I was in their building, seeing their workflows, understanding their pain points firsthand.
+              The breakthrough came through our NYPD partnership. With CJIS-certified access to their Evidence.com instance, I saw exactly what real-world video challenges looked like at scale.
             </p>
 
             <div className="bg-[#1E3A8A]/5 border border-[#1E3A8A]/20 rounded-lg p-4 space-y-3">
@@ -338,13 +367,31 @@ export default function ArticlePage() {
           </section>
 
           {/* Conclusion */}
-          <section className="border-t border-gray-200 pt-8 space-y-4">
+          <section className="border-t border-gray-200 pt-8 space-y-6">
+            <h2 className="text-xl font-bold text-gray-900">The Bottom Line</h2>
+
             <p className="text-gray-700 leading-relaxed">
-              After seven years building Evidence.com and working directly with agencies from the world's largest police department to small-town sheriffs, I've learned that the difference between AI that demos well and AI that deploys successfully comes down to one thing: training data that reflects reality.
+              After seven years building Evidence.com and working directly with agencies from the world's largest police department to small-town sheriffs, I've learned that the difference between AI that demos well and AI that deploys successfully comes down to one thing:
             </p>
-            <p className="text-gray-700 leading-relaxed font-medium">
+
+            {/* Final Pull Quote */}
+            <blockquote className="border-l-4 border-[#2563EB] pl-6 py-4 my-6 bg-gray-50 rounded-r-lg">
+              <p className="text-2xl font-bold text-gray-900 leading-relaxed">
+                Training data that reflects reality.
+              </p>
+            </blockquote>
+
+            <p className="text-lg text-gray-800 leading-relaxed font-medium">
               The technology is ready. The question is whether vendors are willing to do the hard work of getting real data, handling it responsibly, and building for the conditions that actually exist in the field.
             </p>
+
+            {/* Call to Action */}
+            <div className="bg-[#1E3A8A] text-white rounded-xl p-6 mt-8">
+              <p className="text-sm font-semibold text-amber-300 uppercase tracking-wide mb-2">Ready to see the difference?</p>
+              <p className="text-white/90 leading-relaxed">
+                This demo showcases TwelveLabs' video AI on real-world evidence quality levels. Search the indexed footage above to see how the technology performs on actual BWC video.
+              </p>
+            </div>
           </section>
 
         </div>
