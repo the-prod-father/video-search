@@ -301,40 +301,34 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      {/* NEW HERO - Problem → Solution → Proof */}
-      <div className="bg-gradient-to-br from-[#1E3A8A] via-[#1E40AF] to-[#2563EB] rounded-xl sm:rounded-2xl p-6 sm:p-10 lg:p-12 text-white relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
-        </div>
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      {/* HERO - Clean, Minimal, Jony Ive-inspired */}
+      <div className="bg-gradient-to-b from-[#1E3A8A] to-[#1E40AF] rounded-2xl p-5 sm:p-8 lg:p-12 text-white">
+        <div className="space-y-5 sm:space-y-6">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium tracking-wide">
+            <Zap className="h-3.5 w-3.5" />
+            <span>AI-Powered Evidence Search</span>
+          </div>
 
-        <div className="relative z-10 space-y-6 sm:space-y-8">
-          {/* Pain Point & Solution */}
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium">
-              <Zap className="h-4 w-4 text-yellow-300" />
-              <span>AI-Powered Evidence Search</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
-              Find the Critical Moment<br className="hidden sm:block" /> in Seconds, Not Hours
+          {/* Headline */}
+          <div className="space-y-3">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-semibold tracking-tight leading-[1.15]">
+              Find the Critical Moment in Seconds
             </h1>
-
-            <p className="text-lg sm:text-xl text-white/80 max-w-2xl leading-relaxed">
-              Officers spend <span className="text-yellow-300 font-semibold">4+ hours per incident</span> reviewing video evidence.
+            <p className="text-sm sm:text-base lg:text-lg text-white/70 max-w-xl leading-relaxed">
+              Officers spend <span className="text-white font-medium">4+ hours per incident</span> reviewing footage.
               Search by objects, actions, speech, and text—instantly.
             </p>
           </div>
 
-          {/* Live Search Box */}
-          <div className="max-w-2xl">
+          {/* Search Box */}
+          <div className="max-w-xl">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search your evidence... (e.g., 'person with weapon')"
+                placeholder="Search evidence..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -342,24 +336,25 @@ export default function Dashboard() {
                     handleSearch(searchQuery.trim());
                   }
                 }}
-                className="w-full pl-12 pr-4 py-4 text-lg bg-white text-gray-900 rounded-xl border-2 border-transparent focus:border-yellow-300 focus:outline-none shadow-xl placeholder:text-gray-400"
+                className="w-full pl-10 sm:pl-12 pr-20 sm:pr-24 py-3 sm:py-3.5 text-sm sm:text-base bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg placeholder:text-gray-400"
               />
               <Button
                 onClick={() => searchQuery.trim() && handleSearch(searchQuery.trim())}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-semibold"
+                size="sm"
+                className="absolute right-1.5 top-1/2 transform -translate-y-1/2 bg-[#1E3A8A] hover:bg-[#172554] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium"
               >
                 Search
               </Button>
             </div>
 
-            {/* Example Query Chips */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="text-sm text-white/60">Try:</span>
-              {exampleQueries.map((query) => (
+            {/* Query Chips */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="text-xs text-white/50">Try:</span>
+              {exampleQueries.slice(0, 4).map((query) => (
                 <button
                   key={query}
                   onClick={() => handleSearch(query)}
-                  className="text-sm bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full transition-colors border border-white/20 hover:border-white/40"
+                  className="text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md transition-colors"
                 >
                   {query}
                 </button>
@@ -367,63 +362,59 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Differentiators */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-white/20">
-            {/* Accuracy by Video Type */}
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <Eye className="h-5 w-5 text-yellow-300" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Tested on Real Video Quality</p>
-                <p className="text-xs text-white/60 mt-1">
-                  BWC 75-85% • CCTV 70-80% • iPhone 95%
-                </p>
-              </div>
+          {/* Stats Row */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-white/10">
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-xl lg:text-2xl font-semibold">{totalVideos}</p>
+              <p className="text-[10px] sm:text-xs text-white/50 uppercase tracking-wide">Files Indexed</p>
             </div>
-
-            {/* Deployment Options */}
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <Shield className="h-5 w-5 text-green-300" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Government-Ready</p>
-                <p className="text-xs text-white/60 mt-1">
-                  Cloud • On-Premise • Air-Gapped
-                </p>
-              </div>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-xl lg:text-2xl font-semibold">{formatDuration(totalDuration)}</p>
+              <p className="text-[10px] sm:text-xs text-white/50 uppercase tracking-wide">Total Duration</p>
             </div>
-
-            {/* Compliance */}
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <Fingerprint className="h-5 w-5 text-blue-300" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Compliance Ready</p>
-                <p className="text-xs text-white/60 mt-1">
-                  FedRAMP • CJIS • ITAR pathways
-                </p>
-              </div>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-xl lg:text-2xl font-semibold">{"<1s"}</p>
+              <p className="text-[10px] sm:text-xs text-white/50 uppercase tracking-wide">Search Time</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Secondary Actions Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Capabilities - Clean icon grid */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 text-center">
+          <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-[#1E3A8A] mx-auto mb-2" />
+          <p className="text-[10px] sm:text-xs font-medium text-gray-900">Real Video Quality</p>
+          <p className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5">BWC • CCTV • Mobile</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 text-center">
+          <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-[#1E3A8A] mx-auto mb-2" />
+          <p className="text-[10px] sm:text-xs font-medium text-gray-900">Gov Deployment</p>
+          <p className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5">Cloud • On-Prem • Air-Gap</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 text-center">
+          <Fingerprint className="h-5 w-5 sm:h-6 sm:w-6 text-[#1E3A8A] mx-auto mb-2" />
+          <p className="text-[10px] sm:text-xs font-medium text-gray-900">Compliance</p>
+          <p className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5">FedRAMP • CJIS • ITAR</p>
+        </div>
+      </div>
+
+      {/* Action Buttons - Compact row */}
+      <div className="flex gap-2 sm:gap-3">
         <Button
           variant="outline"
-          className="flex-1 h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#2563EB] hover:text-[#2563EB] font-medium rounded-xl"
+          size="sm"
+          className="flex-1 h-9 sm:h-10 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-[#1E3A8A] text-xs sm:text-sm font-medium rounded-lg"
           onClick={() => router.push('/videos')}
         >
-          <FileVideo className="mr-2 h-4 w-4" />
-          View All Evidence ({totalVideos})
+          <FileVideo className="mr-1.5 h-3.5 w-3.5" />
+          <span className="hidden sm:inline">All Evidence</span>
+          <span className="sm:hidden">Files</span>
         </Button>
         <Button
           variant="outline"
-          className="flex-1 h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#2563EB] hover:text-[#2563EB] font-medium rounded-xl disabled:opacity-50"
+          size="sm"
+          className="flex-1 h-9 sm:h-10 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-[#1E3A8A] text-xs sm:text-sm font-medium rounded-lg disabled:opacity-50"
           onClick={async () => {
             setEvidenceLoading(true);
             setEvidenceError(null);
@@ -439,76 +430,59 @@ export default function Dashboard() {
           disabled={evidenceLoading}
         >
           {evidenceLoading ? (
-            <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#2563EB] border-t-transparent" />
-              Syncing...
-            </>
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
           ) : (
             <>
-              <Download className="mr-2 h-4 w-4" />
-              Sync from Evidence.com
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Evidence.com</span>
+              <span className="sm:hidden">Sync</span>
             </>
           )}
         </Button>
         <Button
           variant="outline"
-          className="flex-1 h-11 border-2 border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:border-[#8B5CF6] hover:text-[#8B5CF6] font-medium rounded-xl"
+          size="sm"
+          className="flex-1 h-9 sm:h-10 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-[#1E3A8A] text-xs sm:text-sm font-medium rounded-lg"
           onClick={() => router.push('/insights')}
         >
-          <FileSearch className="mr-2 h-4 w-4" />
-          Deployment Guide
+          <FileSearch className="mr-1.5 h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Deploy Guide</span>
+          <span className="sm:hidden">Guide</span>
         </Button>
       </div>
 
-      {/* Evidence.com Sync Status - Mobile-Optimized */}
+      {/* Evidence.com Sync Status */}
       {(evidenceSuccess || evidenceError) && (
-        <Card className={`border-2 ${evidenceSuccess ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-500 shadow-lg' : 'bg-gradient-to-r from-red-50 to-rose-50 border-red-500 shadow-lg'}`}>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-start sm:items-center space-x-3 flex-1 min-w-0">
-                {evidenceSuccess ? (
-                  <>
-                    <div className="p-2 bg-green-500 rounded-full shadow-md flex-shrink-0">
-                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-green-900 text-sm sm:text-base">Evidence.com Sync Successful!</p>
-                      <p className="text-xs sm:text-sm text-green-700">
-                        Found {evidenceVideos.length} video{evidenceVideos.length !== 1 ? 's' : ''} {evidenceSource === 'Demo Data' ? '(Demo Mode)' : 'from Evidence.com'}
-                      </p>
-                      {evidenceSource && (
-                        <p className="text-xs text-green-600 mt-1 font-mono break-all">
-                          Source: {evidenceSource} {evidenceEndpoint && `• ${evidenceEndpoint}`}
-                        </p>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="p-2 bg-red-500 rounded-full shadow-md flex-shrink-0">
-                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-red-900 text-sm sm:text-base">Error Syncing Evidence.com</p>
-                      <p className="text-xs sm:text-sm text-red-700 break-words">{evidenceError}</p>
-                    </div>
-                  </>
+        <div className={`rounded-lg p-3 sm:p-4 ${evidenceSuccess ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              {evidenceSuccess ? (
+                <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${evidenceSuccess ? 'text-green-900' : 'text-red-900'}`}>
+                  {evidenceSuccess
+                    ? `Synced ${evidenceVideos.length} file${evidenceVideos.length !== 1 ? 's' : ''}`
+                    : 'Sync failed'}
+                </p>
+                {evidenceError && (
+                  <p className="text-xs text-red-600 truncate">{evidenceError}</p>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full sm:w-auto hover:bg-white/50"
-                onClick={() => {
-                  setEvidenceSuccess(false);
-                  setEvidenceError(null);
-                }}
-              >
-                Dismiss
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+            <button
+              onClick={() => {
+                setEvidenceSuccess(false);
+                setEvidenceError(null);
+              }}
+              className="text-xs text-gray-500 hover:text-gray-700"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Evidence.com Videos - Mobile-Optimized */}
@@ -536,8 +510,8 @@ export default function Dashboard() {
                     Demo Mode
                   </Badge>
                 ) : evidenceSource ? (
-                  <Badge className="text-xs sm:text-sm bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-md">
-                    ✓ Live Data
+                  <Badge className="text-xs sm:text-sm bg-green-600 text-white border-0">
+                    Live Data
                   </Badge>
                 ) : null}
                 <Badge className="text-xs sm:text-sm bg-gradient-to-r from-[#2563EB] to-[#3B82F6] text-white border-0 shadow-md">
