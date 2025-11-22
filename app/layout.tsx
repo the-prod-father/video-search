@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Video, Search, Database, BarChart3, Info, Shield, Zap, Menu, X, FileText, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import MobileNav from "@/components/MobileNav";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -146,6 +147,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        <Analytics />
       </body>
     </html>
   );
