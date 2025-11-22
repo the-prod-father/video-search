@@ -68,10 +68,35 @@ export default function Dashboard() {
   } | null>(null);
   const [loadingVideoUrl, setLoadingVideoUrl] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dynamicKeywords, setDynamicKeywords] = useState<string[]>([]);
+  const [keywordsLoading, setKeywordsLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Fetch dynamic keywords when we have an index
+  useEffect(() => {
+    if (indexes.length > 0) {
+      fetchKeywords(indexes[0].id);
+    }
+  }, [indexes]);
+
+  const fetchKeywords = async (indexId: string) => {
+    setKeywordsLoading(true);
+    try {
+      const response = await fetch(`/api/keywords?indexId=${indexId}`);
+      const data = await response.json();
+
+      if (response.ok && data.keywords && data.keywords.length > 0) {
+        setDynamicKeywords(data.keywords);
+      }
+    } catch (error) {
+      console.error('Error fetching keywords:', error);
+    } finally {
+      setKeywordsLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -283,15 +308,17 @@ export default function Dashboard() {
     );
   }
 
-  // Example queries for the chips
-  const exampleQueries = [
-    'officer draws weapon',
-    'vehicle pursuit',
-    'verbal altercation',
-    'person in red jacket',
-    'handcuffs',
-    'license plate'
+  // Example queries for the chips - use dynamic keywords if available
+  const fallbackQueries = [
+    'person speaking',
+    'demonstration',
+    'recording device',
+    'camera',
+    'equipment',
+    'instructions'
   ];
+
+  const exampleQueries = dynamicKeywords.length > 0 ? dynamicKeywords : fallbackQueries;
 
   const handleSearch = (query: string) => {
     const searchParams = new URLSearchParams();
@@ -360,15 +387,19 @@ export default function Dashboard() {
             {/* Query Chips */}
             <div className="mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className="text-xs text-white/50">Try:</span>
-              {exampleQueries.slice(0, 4).map((query) => (
-                <button
-                  key={query}
-                  onClick={() => handleSearch(query)}
-                  className="text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md transition-colors"
-                >
-                  {query}
-                </button>
-              ))}
+              {keywordsLoading ? (
+                <span className="text-xs text-white/50 italic">analyzing videos...</span>
+              ) : (
+                exampleQueries.slice(0, 4).map((query) => (
+                  <button
+                    key={query}
+                    onClick={() => handleSearch(query)}
+                    className="text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md transition-colors"
+                  >
+                    {query}
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
